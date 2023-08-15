@@ -1,4 +1,4 @@
-(for details on how to set up this project locally if you want to run it yourself, see [README_SETUP.md](./README_SETUP.md) A template to make your own typescript dev environment [can be found here](https://github.com/ficocelliguy/viteburner-template/tree/main))
+(for details on how to set up this project locally if you want to run it yourself, see [README_SETUP.md](./README_SETUP.md) A template to make your own Vite typescript dev environment [can be found here](https://github.com/ficocelliguy/viteburner-template/tree/main), or you can use the [typescript template made by the game's devs](https://github.com/bitburner-official/typescript-template/))
 
 ## Bitburner, the game, the myth, the legend
 
@@ -60,7 +60,8 @@ I've recieved some invitations, What groups should I join?
 * Sector-12 and the various factions unlocked through running `backdoor` on their server have hacking skill and speed boosts, which greatly speed up progression, and don't conflict with Aevum.</details>
 <details><summary>Hint for next run: </summary> * On the next run, aim for Chonqing's hacking boosts, and whatever hacking boosts you didn't get on prior runs.
 * AFAIK, only city-based factions have conflicts with other factions, the others can be joined freely.
-* NeuroFlux Governors can be repeatedly purchased, and quickly makes a big difference in the time it takes to do stuff </details>
+* NeuroFlux Governors can be repeatedly purchased, and quickly makes a big difference in the time it takes to do stuff. 
+* Any reputation you get for a faction turns into favor on the next run, which is a multiplier of the rep you gain with that faction. </details>
 <details><summary>Hint for later game: </summary> * The key faction to progressing the story will reach out to you at 2500 hacking level. </details>
 
 

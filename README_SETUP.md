@@ -66,7 +66,7 @@ If you run into issues, make sure that the "API server" is enabled in the menu a
 
 If the terminal shows `error TS2307: Cannot find module '@ns' or its corresponding type declarations.` (or see the same error at your editor), it is fine. The missing type declaration "NetscriptDefinitions.d.ts" will be downloaded from the game once connected. If there is some issue with that, you can manually [download it from the game's github source](https://github.com/bitburner-official/bitburner-src/blob/cef452d35ebce7ca17d7ef124996daa31fd55e3e/src/ScriptEditor/NetscriptDefinitions.d.ts#L1) and add it to the root directory of this project.
 
-If all else fails, you can try the [typescript template made by the game's dev](https://github.com/bitburner-official/typescript-template/). The documentation there can be helpful with debugging issues, or you can use that as a template instead, if this one gets out-of-date.
+If all else fails, you can try the [typescript template made by the game's devs](https://github.com/bitburner-official/typescript-template/). The documentation there can be helpful with debugging issues, or you can use that as a template instead, if this one gets out-of-date.
 
 
 ### Tools used in this stack:

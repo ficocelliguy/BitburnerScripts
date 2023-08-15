@@ -14,6 +14,7 @@
   "ignorePatterns": ["node_modules/**", "dist/**", "NetscriptDefinitions.d.ts"],
   "rules": {
     "no-constant-condition": ["off"],
-    "@typescript-eslint/no-floating-promises": "error"
+    "@typescript-eslint/no-floating-promises": "error",
+    "no-empty": ["error", { "allowEmptyCatch": true }]
   }
 }
