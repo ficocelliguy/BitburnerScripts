@@ -2,7 +2,8 @@
   "name": "viteburner-template",
   "version": "0.0.0",
   "scripts": {
-    "dev": "viteburner"
+    "dev": "viteburner",
+    "lint": " eslint . --fix"
   },
   "author": "Tanimodori",
   "devDependencies": {
