@@ -17,6 +17,6 @@ export default defineConfig({
   viteburner: {
     watch: [{ pattern: 'src/**/*.{js,ts}', transform: true }, { pattern: 'src/**/*.{script,txt}' }],
     sourcemap: 'inline',
-    port: 13579,
+    port: 31337,
   },
 });
