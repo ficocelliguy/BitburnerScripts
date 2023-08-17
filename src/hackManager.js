@@ -39,7 +39,7 @@ export async function main(ns) {
 
       if (threadsRemaining) {
         targetObj.threadsRemaining = threadsRemaining;
-        ns.print('Resources maxed; Sleeping for ' + (dynamicWaitTime / (1000 * 60)).toFixed(2) + ' minutes.');
+        ns.print(`Resources maxed; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
         await ns.sleep(dynamicWaitTime);
         index = 0;
         serversAffected = 0;
@@ -61,7 +61,7 @@ export async function main(ns) {
       const hackLaunced = launchAttack(ns, target);
 
       if (!hackLaunced) {
-        ns.print('Resources maxed; Sleeping for ' + (dynamicWaitTime / (1000 * 60)).toFixed(2) + ' minutes.');
+        ns.print(`Resources maxed; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
         await ns.sleep(dynamicWaitTime);
         index = 0;
         serversAffected = 0;
@@ -81,7 +81,7 @@ export async function main(ns) {
         currentMaxTargets = Math.min(currentMaxTargets + 1, MAX_TARGETS, potentialTargets.length);
         if (currentMaxTargets >= potentialTargets.length) {
           ns.print(
-            'All viable servers processing; Sleeping for ' + (dynamicWaitTime / (1000 * 60)).toFixed(2) + ' minutes.',
+            `All viable servers processing; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`,
           );
           await ns.sleep(dynamicWaitTime);
         }
@@ -115,7 +115,7 @@ const launchAttack = (ns, target) => {
   const gSize = ns.getScriptRam(GROW_SCRIPT);
 
   const hThreadsPerUnit = 20;
-  const gThreadsPerUnit = Math.ceil(Math.min((hThreadsPerUnit * hPercent * 1.2) / gPercent, hThreadsPerUnit * 0.5));
+  const gThreadsPerUnit = Math.ceil(Math.max((hThreadsPerUnit * hPercent * 1.2) / gPercent, hThreadsPerUnit * 1.5));
 
   // Weaken decreases security by 0.05 per thread, grow raises by 0.004, and hack raises by 0.002.
   const weakenAfterHackThreadsPerUnit = Math.ceil(hThreadsPerUnit * (0.002 / 0.05));
@@ -139,18 +139,8 @@ const launchAttack = (ns, target) => {
     0,
     10000000,
   );
-  ns.print(
-    ' !! ' +
-      target +
-      ' has $' +
-      ns.formatNumber(currentMoney) +
-      ' (' +
-      (100 * moneyPercent).toFixed(1) +
-      '%)' +
-      '; Launching attack with ' +
-      threadCount +
-      ' threads...',
-  );
+  ns.print(`  !! ${target} has $${ns.formatNumber(currentMoney)} (${(100 * moneyPercent).toFixed(1)}%); 
+        Launching attack with ${threadCount} threads (${attackCount * unitCount * unitSize}GB / ${ram}GB)...`);
 
   for (let i = 0; i < attackCount; i++) {
     // hack should complete & apply just BEFORE first weaken
@@ -200,14 +190,9 @@ const growTargetToMax = (ns, target, GROW_SCRIPT, WEAKEN_SCRIPT, priorThreads = 
   const remainingThreads = Math.max(gThreads - priorThreads, 0);
   if (remainingThreads) {
     ns.print(
-      target +
-        ' grow required, currently ' +
-        Math.round((currentMoney / maxMoney) * 100) +
-        '% of $' +
-        ns.formatNumber(maxMoney) +
-        ' : ' +
-        remainingThreads +
-        '  threads needed',
+      `${target} grow required, currently ${Math.round((currentMoney / maxMoney) * 100)}% of $${ns.formatNumber(
+        maxMoney,
+      )} : ${remainingThreads} threads needed`,
     );
   }
 
@@ -312,14 +297,14 @@ const getAvailableRamOnServers = (ns) => {
 /** @param {NS} ns */
 const getAvailableRam = (ns) => {
   const servers = getServers(ns);
-  return (
+  return Math.floor(
     0.95 *
-    servers
-      .filter((server) => ns.getServer(server).hasAdminRights)
-      .reduce((sum, server) => {
-        const available = ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - (server === 'home' ? 16 : 4);
-        return sum + Math.max(available, 0);
-      }, 0)
+      servers
+        .filter((server) => ns.getServer(server).hasAdminRights)
+        .reduce((sum, server) => {
+          const available = ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - (server === 'home' ? 16 : 4);
+          return sum + Math.max(available, 0);
+        }, 0),
   );
 };
 
@@ -340,7 +325,7 @@ const deployDistributedThreads = (ns, scriptName, target, threads, offset = 0) =
     }
 
     ns.scp(scriptName, node.id);
-    ns.exec(scriptName, node.id, maxThreads, target, offset);
+    ns.exec(scriptName, node.id, maxThreads, target, offset, `Threads: ${maxThreads}`);
     threadsRemaining -= maxThreads;
   });
 

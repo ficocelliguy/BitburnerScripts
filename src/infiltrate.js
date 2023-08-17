@@ -1,9 +1,10 @@
 /*
-  This is a very work-in-progress automation of the infiltration minigame.
+  This is a work-in-progress automation of the infiltration minigame.
  */
 
 const TITLE_TAG = 'h4';
 //const SUBTITLE_TAG = 'h5';
+const TARGET_FACTION = 'Black Hand';
 
 const doc = globalThis['document'];
 
@@ -21,7 +22,7 @@ export async function main(ns) {
     let title = getGameTitle(ns);
     while (title) {
       ns.print(`Minigame Detected! ${title}`);
-      console.log(`Minigame Detected! ${title}`);
+      console.log(`Title detected: ${title}`);
 
       if (contains(title, 'Match the symbols')) {
         await playMatchSymbols(ns);
@@ -35,6 +36,14 @@ export async function main(ns) {
         await playMatchBrackets(ns);
       } else if (contains(title, 'about the guard')) {
         await playComplimentGuard(ns);
+      } else if (contains(title, 'the mines')) {
+        await playRememberMines(ns);
+      } else if (contains(title, 'Cut the wires')) {
+        await playCutWires(ns);
+      } else if (contains(title, 'Infiltration successful')) {
+        await handleSuccess(ns);
+      } else if (contains(title, 'Get Ready')) {
+        await ns.sleep(100);
       } else {
         console.log('Minigame not yet implemented');
         await ns.sleep(500);
@@ -50,6 +59,85 @@ export async function main(ns) {
     await ns.sleep(1000);
   }
 }
+
+/** @param {NS} ns */
+const handleSuccess = async (ns) => {
+  ns.print('Success!');
+  await ns.sleep(1000);
+
+  // while (!doc)
+
+  await sendKeyboardEvent(ns, 9);
+  await sendKeyboardEvent(ns, 'S');
+  await sendKeyboardEvent(ns, 13);
+  await sendKeyboardEvent(ns, 9);
+  await sendKeyboardEvent(ns, 13);
+};
+
+/** @param {NS} ns */
+const playCutWires = async (ns) => {
+  const instructions = Array.from(doc.querySelectorAll('div > p'))
+    .map((n) => n.innerText)
+    .filter((text) => text.indexOf('Cut') !== -1)
+    .map((text) => text.match(/[0-9]| yellow| red| blue| white/)[0].trim());
+
+  const wireCount = Array.from(doc.querySelectorAll('div > p')).filter((n) => n.innerText.match(/^[0-9]/)).length;
+
+  const wireColors = Array.from(doc.querySelectorAll('div > p'))
+    .filter((n) => n.innerText.match(/^\|/))
+    .map((n) => n.getAttribute('style').match(/: ([redylowbuhitg]+)/)[1])
+    .map((c) => (c === 'rgb' ? 'yellow' : c));
+
+  const wireProperties = [];
+  for (let j = 0; j < wireCount; j++) {
+    wireProperties.push(wireColors.filter((n, i) => i % 9 === j));
+  }
+
+  for (let i = 0; i < wireProperties.length; i++) {
+    const wireColors = wireProperties[i];
+    const hasMatchingColor = wireColors.find((color) => contains(instructions, color));
+    if (hasMatchingColor || contains(instructions, `${i + 1}`)) {
+      await sendKeyboardEvent(ns, `${i + 1}`);
+      await ns.sleep(50);
+    }
+  }
+};
+
+/** @param {NS} ns */
+const playRememberMines = async (ns) => {
+  ns.print('remember mines detected ... ');
+
+  const querySelector = [16, 20, 25, 30, 36, 42, 48]
+    .map((i) => `* p:first-child:nth-last-child(${i}), * p:first-child:nth-last-child(${i}) ~ p`)
+    .join(', ');
+
+  const gridItems = Array.from(doc.querySelectorAll(querySelector)).map((node) => !!node.innerHTML);
+  const xSize = Math.floor(Math.sqrt(gridItems.length));
+  const ySize = Math.ceil(Math.sqrt(gridItems.length));
+  let grid = [];
+
+  for (let i = 0; i < ySize; i++) {
+    grid[i] = gridItems.slice(xSize * i, xSize * (i + 1));
+  }
+
+  while (getGameTitle(ns).indexOf('Mark') === -1) {
+    await ns.sleep(10);
+  }
+
+  await ns.sleep(50);
+
+  for (let i = 0; i < ySize; i++) {
+    for (let j = 0; j < xSize; j++) {
+      const item = grid[i][j];
+
+      if (item) {
+        await sendKeyboardEvent(ns, ' ');
+      }
+      await sendKeyboardEvent(ns, 'D');
+    }
+    await sendKeyboardEvent(ns, 'S');
+  }
+};
 
 /** @param {NS} ns */
 const playComplimentGuard = async (ns) => {
@@ -76,6 +164,7 @@ const playComplimentGuard = async (ns) => {
     'dynamic',
     'loyal',
     'based',
+    'straightforward',
   ];
 
   const getSuperlative = () =>
@@ -127,12 +216,12 @@ const playMatchBrackets = async (ns) => {
 const playAttackGuard = async (ns) => {
   let title = getGameTitle(ns);
 
-  while (!contains(title, 'ATTACK')) {
+  while (!contains(title, 'reparing')) {
     await ns.sleep(10);
     title = getGameTitle(ns);
   }
-  await ns.sleep(10);
 
+  await ns.sleep(10);
   await sendKeyboardEvent(ns, ' ');
 };
 
@@ -188,16 +277,18 @@ const playMatchSymbols = async (ns) => {
   ns.print('Match symbols detected ... ');
 
   const answers = Array.from(doc.querySelectorAll('h5 span')).map((el) => el.innerText.trim());
-  const querySelector = [4, 5, 6, 7, 8, 9]
-    .map((i) => `* :first-child:nth-last-child(${i ** 2}), * :first-child:nth-last-child(${i ** 2}) ~ *`)
+
+  const querySelector = [16, 20, 25, 30, 36, 42, 48]
+    .map((i) => `* p:first-child:nth-last-child(${i}), * p:first-child:nth-last-child(${i}) ~ p`)
     .join(', ');
-
   const gridItems = Array.from(doc.querySelectorAll(querySelector)).map((node) => node.innerText);
-  const size = Math.sqrt(gridItems.length);
-  let grid = [];
 
-  for (let i = 0; i < size; i++) {
-    grid[i] = gridItems.slice(size * i, size * (i + 1));
+  const xSize = Math.floor(Math.sqrt(gridItems.length));
+  const ySize = Math.ceil(Math.sqrt(gridItems.length));
+
+  let grid = [];
+  for (let i = 0; i < ySize; i++) {
+    grid[i] = gridItems.slice(xSize * i, xSize * (i + 1));
   }
 
   let x = 0,
@@ -206,11 +297,11 @@ const playMatchSymbols = async (ns) => {
   for (let k in answers) {
     const answer = answers[k];
     const index = gridItems.indexOf(answer);
-    const xCoord = index % size;
-    const yCoord = Math.floor(index / size);
+    const xCoord = index % xSize;
+    const yCoord = Math.floor(index / ySize);
 
     for (let i = 0; i < Math.abs(xCoord - x); i++) {
-      await sendKeyboardEvent(ns, xCoord - x > 0 ? 'D' : 'S');
+      await sendKeyboardEvent(ns, xCoord - x > 0 ? 'D' : 'A');
     }
     for (let i = 0; i < Math.abs(yCoord - y); i++) {
       await sendKeyboardEvent(ns, yCoord - y > 0 ? 'S' : 'W');
@@ -239,14 +330,14 @@ const sendKeyboardEvent = async (ns, keyOrCode) => {
     return;
   }
 
-  console.log(`Sending key ${key} : ${keyCode}`);
+  //console.log(`Sending key ${key} : ${keyCode}`);
   const keyboardEvent = new KeyboardEvent('keydown', {
     key,
     keyCode,
   });
 
   doc.dispatchEvent(keyboardEvent);
-  await ns.sleep(20);
+  await ns.sleep(50);
 };
 
 const contains = (string1, string2) => string1.indexOf(string2) !== -1;

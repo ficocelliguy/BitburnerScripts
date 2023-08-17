@@ -55,7 +55,7 @@ In your terminal or command line, run
 npm start
 `
 
-It will log the port number it is listening for (default: `31337`)
+Viteburner will start, and log the port number it is listening for (default: `31337`)
 
 In Bitburner, select `⚙ Options` on the bottom-left, go to "Remote API", enter the port that viteburner displays, and click "Connect".
 
