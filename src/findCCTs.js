@@ -84,43 +84,27 @@ const solveSanitizeParens = (data) => {
 
   const dataArray = data.split('');
 
-  const parenCount = (char, arr) => arr.filter((c) => c === char).length;
+  const validate = (data) => {
+    let unmatchedParenPairs = 0;
+    for (let i = 0; i < data.length; i++) {
+      const char = data[i];
 
-  return dataArray
-    .reduce((solutions, character, index, arr) => {
-      if (character === ')') {
-        const priorOpenParenCount = parenCount('(', arr.slice(0, index));
-        const priorCloseParenCount = parenCount(')', arr.slice(0, index));
-
-        if (priorCloseParenCount >= priorOpenParenCount) {
-          solutions.push(
-            arr
-              .slice(0, index)
-              .concat(arr.slice(index + 1))
-              .join(''),
-          );
-        }
+      if (char === '(') {
+        unmatchedParenPairs++;
+      } else if (char === ')') {
+        unmatchedParenPairs--;
       }
-
-      if (character === '(') {
-        const followingOpenParenCount = parenCount('(', arr.slice(0, index));
-        const followingCloseParenCount = parenCount(')', arr.slice(0, index));
-
-        if (followingOpenParenCount >= followingCloseParenCount) {
-          solutions.push(
-            arr
-              .slice(0, index)
-              .concat(arr.slice(index + 1))
-              .join(''),
-          );
-        }
+      if (unmatchedParenPairs < 0) {
+        return false;
       }
+    }
 
-      return solutions;
-    }, [])
-    .filter((s, index, arr) => arr.indexOf(s) === index);
+    return unmatchedParenPairs === 0;
+  };
 
-  /*
+  validate('()())()');
+};
+/*
   ()())()
 
 
@@ -130,7 +114,6 @@ const solveSanitizeParens = (data) => {
   * There must be an equal number of "(" and ")"
 
  */
-};
 
 console.log(solveSanitizeParens('()())()'));
 console.log(solveSanitizeParens('(a)())()'));

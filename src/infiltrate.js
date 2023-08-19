@@ -3,7 +3,6 @@
  */
 
 const TITLE_TAG = 'h4';
-//const SUBTITLE_TAG = 'h5';
 const TARGET_FACTION = 'Black Hand';
 
 const doc = globalThis['document'];
@@ -22,7 +21,7 @@ export async function main(ns) {
     let title = getGameTitle(ns);
     while (title) {
       ns.print(`Minigame Detected! ${title}`);
-      console.log(`Title detected: ${title}`);
+      //console.log(`Title detected: ${title}`);
 
       if (contains(title, 'Match the symbols')) {
         await playMatchSymbols(ns);
@@ -65,13 +64,37 @@ const handleSuccess = async (ns) => {
   ns.print('Success!');
   await ns.sleep(1000);
 
-  // while (!doc)
-
-  await sendKeyboardEvent(ns, 9);
-  await sendKeyboardEvent(ns, 'S');
-  await sendKeyboardEvent(ns, 13);
-  await sendKeyboardEvent(ns, 9);
-  await sendKeyboardEvent(ns, 13);
+  // doc.querySelector('.MuiInputBase-root').click();
+  // await ns.sleep(40);
+  // await sendKeyboardEvent(ns, ' ');
+  //
+  // while (doc.activeElement.innerText?.indexOf(TARGET_FACTION) === -1) {
+  //   await sendKeyboardEvent(ns, 40);
+  // }
+  //
+  // await sendKeyboardEvent(ns, 13);
+  // await sendKeyboardEvent(ns, 40);
+  // await sendKeyboardEvent(ns, ' ');
+  //
+  // await ns.sleep(100);
+  //
+  // while (doc.activeElement.innerText !== 'Job') {
+  //   await sendKeyboardEvent(ns, 9);
+  // }
+  //
+  // await sendKeyboardEvent(ns, ' ');
+  //
+  // while (doc.activeElement.innerText?.indexOf('Infiltrate ') === -1) {
+  //   await sendKeyboardEvent(ns, 9);
+  // }
+  //
+  // await sendKeyboardEvent(ns, ' ');
+  //
+  // while (doc.activeElement.innerText?.indexOf('Start ') === -1) {
+  //   await sendKeyboardEvent(ns, 9);
+  // }
+  //
+  // await sendKeyboardEvent(ns, ' ');
 };
 
 /** @param {NS} ns */
@@ -90,7 +113,7 @@ const playCutWires = async (ns) => {
 
   const wireProperties = [];
   for (let j = 0; j < wireCount; j++) {
-    wireProperties.push(wireColors.filter((n, i) => i % 9 === j));
+    wireProperties.push(wireColors.filter((n, i) => i % wireCount === j));
   }
 
   for (let i = 0; i < wireProperties.length; i++) {
@@ -107,7 +130,7 @@ const playCutWires = async (ns) => {
 const playRememberMines = async (ns) => {
   ns.print('remember mines detected ... ');
 
-  const querySelector = [16, 20, 25, 30, 36, 42, 48]
+  const querySelector = [9, 12, 16, 20, 25, 30, 36, 42, 48]
     .map((i) => `* p:first-child:nth-last-child(${i}), * p:first-child:nth-last-child(${i}) ~ p`)
     .join(', ');
 
@@ -278,7 +301,7 @@ const playMatchSymbols = async (ns) => {
 
   const answers = Array.from(doc.querySelectorAll('h5 span')).map((el) => el.innerText.trim());
 
-  const querySelector = [16, 20, 25, 30, 36, 42, 48]
+  const querySelector = [9, 12, 16, 20, 25, 30, 36, 42, 48]
     .map((i) => `* p:first-child:nth-last-child(${i}), * p:first-child:nth-last-child(${i}) ~ p`)
     .join(', ');
   const gridItems = Array.from(doc.querySelectorAll(querySelector)).map((node) => node.innerText);
@@ -337,7 +360,7 @@ const sendKeyboardEvent = async (ns, keyOrCode) => {
   });
 
   doc.dispatchEvent(keyboardEvent);
-  await ns.sleep(50);
+  await ns.sleep(30);
 };
 
 const contains = (string1, string2) => string1.indexOf(string2) !== -1;
@@ -372,7 +395,7 @@ function wrapEventListeners() {
       let handler = false;
 
       // For this script, we only want to modify "keydown" events.
-      if ('keydown' === type) {
+      if ('keydown' === type || 'click' === type) {
         handler = function (...args) {
           if (!args[0].isTrusted) {
             const hackedEv = {};

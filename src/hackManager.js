@@ -3,7 +3,11 @@ const GROW_SCRIPT = 'grow.js';
 const HACK_SCRIPT = 'crack.js';
 const MAX_TARGETS = 15;
 const SYNCHRONIZE_OFFSET = 40;
-const MAX_RESOURCES_HACKED = 0.25;
+const MAX_RESOURCES_HACKED = 0.4;
+const CYAN = '\u001b[36m';
+const GREEN = '\u001b[32m';
+const RED = '\u001b[31m';
+const RESET = '\u001b[0m';
 // test 123
 
 /** @param {NS} ns */
@@ -16,13 +20,17 @@ export async function main(ns) {
   let index = 0;
   let currentMaxTargets = Math.min(3, potentialTargets.length);
   let serversAffected = 0;
+  let serverCount = getAvailableRamOnServers(ns).length;
 
   while (true) {
     const now = Date.now();
     const targets = potentialTargets.slice(0, currentMaxTargets);
     const targetObj = targets[index];
     const target = targetObj.id;
-    ns.print('Scanning ' + target + '...');
+    const homeRam = ns.formatNumber(ns.getServerMaxRam('home'), 0, 100000000);
+    const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
+
+    ns.print(`${CYAN} --- [  Target: '${target}'  ] --- ${RESET}`);
     const dynamicWaitTime = getMinimumWeakenTime(ns, targets, index) * 0.25;
 
     const currentMoney = ns.getServerMoneyAvailable(target);
@@ -39,7 +47,10 @@ export async function main(ns) {
 
       if (threadsRemaining) {
         targetObj.threadsRemaining = threadsRemaining;
+
+        serverCount = getAvailableRamOnServers(ns).length;
         ns.print(`Resources maxed; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
+        ns.print(`   Status: Home: ${homeRam}GB  Botnet: ${botRam}GB  ${serverCount} bots `);
         await ns.sleep(dynamicWaitTime);
         index = 0;
         serversAffected = 0;
@@ -58,10 +69,12 @@ export async function main(ns) {
       targetObj.expectedCompletion = 0;
       serversAffected++;
 
-      const hackLaunced = launchAttack(ns, target);
+      const hackLaunched = await launchAttack(ns, target);
 
-      if (!hackLaunced) {
+      if (!hackLaunched) {
+        serverCount = getAvailableRamOnServers(ns).length;
         ns.print(`Resources maxed; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
+        ns.print(`   Status: Home: ${homeRam}GB  Botnet: ${botRam}GB  ${serverCount} bots `);
         await ns.sleep(dynamicWaitTime);
         index = 0;
         serversAffected = 0;
@@ -71,7 +84,7 @@ export async function main(ns) {
       targetObj.threadsRemaining = 0;
       targetObj.expectedCompletion = 0;
     } else if (targetObj.waitingForGrow) {
-      ns.print('( Waiting for grow )');
+      ns.print(`      ( Waiting for grow )`);
     }
 
     index++;
@@ -97,7 +110,7 @@ export async function main(ns) {
 }
 
 /** @param {NS} ns */
-const launchAttack = (ns, target) => {
+const launchAttack = async (ns, target) => {
   const f = ns.formulas.hacking;
   const currentMoney = ns.getServerMoneyAvailable(target);
   const maxMoney = ns.getServerMaxMoney(target);
@@ -115,7 +128,7 @@ const launchAttack = (ns, target) => {
   const gSize = ns.getScriptRam(GROW_SCRIPT);
 
   const hThreadsPerUnit = 20;
-  const gThreadsPerUnit = Math.ceil(Math.max((hThreadsPerUnit * hPercent * 1.2) / gPercent, hThreadsPerUnit * 1.5));
+  const gThreadsPerUnit = ns.growthAnalyze(target, 1 + hPercent * hThreadsPerUnit);
 
   // Weaken decreases security by 0.05 per thread, grow raises by 0.004, and hack raises by 0.002.
   const weakenAfterHackThreadsPerUnit = Math.ceil(hThreadsPerUnit * (0.002 / 0.05));
@@ -124,8 +137,9 @@ const launchAttack = (ns, target) => {
     hSize * hThreadsPerUnit +
     gSize * gThreadsPerUnit +
     wSize * (weakenAfterGrowThreadsPerUnit + weakenAfterGrowThreadsPerUnit);
+  const unitsToReachMaxHackPercent = Math.ceil(MAX_RESOURCES_HACKED / (hThreadsPerUnit * hPercent));
 
-  const unitCount = Math.floor(Math.min(ram / unitSize, MAX_RESOURCES_HACKED / (hThreadsPerUnit * hPercent)));
+  const unitCount = Math.floor(Math.min(ram / unitSize, unitsToReachMaxHackPercent));
   if (ram < unitSize || unitCount <= 0) {
     return false;
   }
@@ -139,9 +153,13 @@ const launchAttack = (ns, target) => {
     0,
     10000000,
   );
-  ns.print(`  !! ${target} has $${ns.formatNumber(currentMoney)} (${(100 * moneyPercent).toFixed(1)}%); 
-        Launching attack with ${threadCount} threads (${attackCount * unitCount * unitSize}GB / ${ram}GB)...`);
+  ns.print(`  !! ${target} has ${GREEN}$${ns.formatNumber(currentMoney)} (${(100 * moneyPercent).toFixed(1)}%${RESET}); 
+        ${RED}Launching attack with ${threadCount} threads...${RESET} (${Math.floor(
+    attackCount * unitCount * unitSize,
+  )}GB / ${ram}GB)`);
 
+  // We have to send out the attacks in "batches" otherwise the servers get completely drained
+  // FUTURE: does this work as-is or do we need to offset the batches more?
   for (let i = 0; i < attackCount; i++) {
     // hack should complete & apply just BEFORE first weaken
     const hackOffset = wTime - hTime - SYNCHRONIZE_OFFSET;
@@ -158,6 +176,12 @@ const launchAttack = (ns, target) => {
       weakenAfterGrowThreadsPerUnit * unitCount,
       2 * SYNCHRONIZE_OFFSET,
     );
+
+    // Very occasionally sleep to prevent the script from appearing to hang
+    // when launched with a lot of free RAM
+    if (i % 10 ** 10 === 0) {
+      await ns.sleep(0);
+    }
   }
 
   return true;
@@ -178,15 +202,13 @@ const weakenTargetToMin = (ns, target) => {
 
 /** @param {NS} ns */
 const growTargetToMax = (ns, target, GROW_SCRIPT, WEAKEN_SCRIPT, priorThreads = 0) => {
-  const currentMoney = ns.getServerMoneyAvailable(target);
+  const currentMoney = Math.max(ns.getServerMoneyAvailable(target), 1);
   const maxMoney = ns.getServerMaxMoney(target);
-  let gThreads = priorThreads;
-  while (
-    currentMoney * ns.formulas.hacking.growPercent(ns.getServer(target), gThreads, ns.getPlayer(), 1) <
-    maxMoney * 1.2
-  ) {
-    gThreads += 10;
-  }
+  const priorGrowthPercent = priorThreads
+    ? ns.formulas.hacking.growPercent(ns.getServer(target), priorThreads, ns.getPlayer(), 1)
+    : 0;
+  const gThreads = ns.growthAnalyze(target, Math.max(1 - priorGrowthPercent + (maxMoney * 1.2) / currentMoney, 1.1));
+
   const remainingThreads = Math.max(gThreads - priorThreads, 0);
   if (remainingThreads) {
     ns.print(
@@ -304,6 +326,19 @@ const getAvailableRam = (ns) => {
         .reduce((sum, server) => {
           const available = ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - (server === 'home' ? 16 : 4);
           return sum + Math.max(available, 0);
+        }, 0),
+  );
+};
+
+/** @param {NS} ns */
+const getMaxRam = (ns, addBuffer = true) => {
+  const servers = getServers(ns);
+  return Math.floor(
+    (addBuffer ? 0.95 : 1) *
+      servers
+        .filter((server) => ns.getServer(server).hasAdminRights)
+        .reduce((sum, server) => {
+          return sum + ns.getServerMaxRam(server);
         }, 0),
   );
 };
