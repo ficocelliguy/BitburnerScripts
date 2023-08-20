@@ -1,8 +1,9 @@
 const WEAKEN_SCRIPT = 'weaken.js';
 const GROW_SCRIPT = 'grow.js';
 const HACK_SCRIPT = 'crack.js';
-const MAX_TARGETS = 15;
+const MAX_TARGETS = 50;
 const SYNCHRONIZE_OFFSET = 40;
+const TARGET_RUNTIME = 2 * 60 * 1000;
 const MAX_RESOURCES_HACKED = 0.4;
 const CYAN = '\u001b[36m';
 const GREEN = '\u001b[32m';
@@ -31,7 +32,7 @@ export async function main(ns) {
     const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
 
     ns.print(`${CYAN} --- [  Target: '${target}'  ] --- ${RESET}`);
-    const dynamicWaitTime = getMinimumWeakenTime(ns, targets, index) * 0.25;
+    const dynamicWaitTime = Math.max(getMinimumWeakenTime(ns, targets, index) * 0.25, 3000);
 
     const currentMoney = ns.getServerMoneyAvailable(target);
     const maxMoney = ns.getServerMaxMoney(target);
@@ -105,7 +106,11 @@ export async function main(ns) {
       serversAffected = 0;
     }
 
-    // await ns.sleep(SYNCHRONIZE_OFFSET);
+    // Very occasionally sleep to prevent the script from appearing to hang
+    // when launched with a lot of free RAM
+    if (index % 10 === 7) {
+      await ns.sleep(0);
+    }
   }
 }
 
@@ -166,22 +171,19 @@ const launchAttack = async (ns, target) => {
     // grow should complete & apply just AFTER first weaken
     const growOffset = wTime - gTime + SYNCHRONIZE_OFFSET;
 
-    deployDistributedThreads(ns, HACK_SCRIPT, target, hThreadsPerUnit * unitCount, hackOffset);
-    deployDistributedThreads(ns, WEAKEN_SCRIPT, target, weakenAfterHackThreadsPerUnit * unitCount, 0);
-    deployDistributedThreads(ns, GROW_SCRIPT, target, gThreadsPerUnit * unitCount, growOffset);
+    const repeatCount = Math.ceil(Math.max(TARGET_RUNTIME / wTime, 1));
+
+    deployDistributedThreads(ns, HACK_SCRIPT, target, hThreadsPerUnit * unitCount, hackOffset, repeatCount);
+    deployDistributedThreads(ns, WEAKEN_SCRIPT, target, weakenAfterHackThreadsPerUnit * unitCount, 0, repeatCount);
+    deployDistributedThreads(ns, GROW_SCRIPT, target, gThreadsPerUnit * unitCount, growOffset, repeatCount);
     deployDistributedThreads(
       ns,
       WEAKEN_SCRIPT,
       target,
       weakenAfterGrowThreadsPerUnit * unitCount,
       2 * SYNCHRONIZE_OFFSET,
+      repeatCount,
     );
-
-    // Very occasionally sleep to prevent the script from appearing to hang
-    // when launched with a lot of free RAM
-    if (i % 10 ** 10 === 0) {
-      await ns.sleep(0);
-    }
   }
 
   return true;
@@ -209,7 +211,7 @@ const growTargetToMax = (ns, target, GROW_SCRIPT, WEAKEN_SCRIPT, priorThreads = 
     : 0;
   const gThreads = ns.growthAnalyze(target, Math.max(1 - priorGrowthPercent + (maxMoney * 1.2) / currentMoney, 1.1));
 
-  const remainingThreads = Math.max(gThreads - priorThreads, 0);
+  const remainingThreads = Math.ceil(Math.max(gThreads - priorThreads, 0));
   if (remainingThreads) {
     ns.print(
       `${target} grow required, currently ${Math.round((currentMoney / maxMoney) * 100)}% of $${ns.formatNumber(
@@ -344,7 +346,7 @@ const getMaxRam = (ns, addBuffer = true) => {
 };
 
 /** @param {NS} ns */
-const deployDistributedThreads = (ns, scriptName, target, threads, offset = 0) => {
+const deployDistributedThreads = (ns, scriptName, target, threads, offset = 0, repeat = 1) => {
   if (!threads) {
     return 0;
   }
@@ -360,7 +362,7 @@ const deployDistributedThreads = (ns, scriptName, target, threads, offset = 0) =
     }
 
     ns.scp(scriptName, node.id);
-    ns.exec(scriptName, node.id, maxThreads, target, offset, `Threads: ${maxThreads}`);
+    ns.exec(scriptName, node.id, maxThreads, target, offset, repeat, `Threads: ${maxThreads}`);
     threadsRemaining -= maxThreads;
   });
 
