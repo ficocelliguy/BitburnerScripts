@@ -59,9 +59,7 @@ const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth
 
   //{"hostname":"big'un-0","ip":"80.6.5.9","sshPortOpen":true,"ftpPortOpen":true,"smtpPortOpen":true,"httpPortOpen":false,"sqlPortOpen":false,"hasAdminRights":true,"cpuCores":1,"isConnectedTo":false,"ramUsed":62.4,"maxRam":64,"organizationName":"","purchasedByPlayer":true,"backdoorInstalled":false,"baseDifficulty":1,"hackDifficulty":1,"minDifficulty":1,"moneyAvailable":0,"moneyMax":0,"numOpenPortsRequired":5,"openPortCount":3,"requiredHackingSkill":1,"serverGrowth":1}
   const portDetails =
-    numOpenPortsRequired && openPortCount && numOpenPortsRequired > openPortCount
-      ? `${openPortCount}/${numOpenPortsRequired}`
-      : '✓';
+    (numOpenPortsRequired ?? 0) > (openPortCount ?? 0) ? `${openPortCount}/${numOpenPortsRequired}` : '✓';
   const root = hasAdminRights ? 'YES' : 'NO';
 
   const infoString = `${'  '.repeat(depth)} ┣  ${

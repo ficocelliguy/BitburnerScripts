@@ -3,13 +3,13 @@ const GROW_SCRIPT = 'grow.js';
 const HACK_SCRIPT = 'crack.js';
 const MAX_TARGETS = 50;
 const SYNCHRONIZE_OFFSET = 40;
-const TARGET_RUNTIME = 2 * 60 * 1000;
+const TARGET_RUNTIME = 4 * 60 * 1000;
 const MAX_RESOURCES_HACKED = 0.4;
+const LOOP_COUNT_BEFORE_REST = 40;
 const CYAN = '\u001b[36m';
 const GREEN = '\u001b[32m';
 const RED = '\u001b[31m';
 const RESET = '\u001b[0m';
-// test 123
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -21,17 +21,16 @@ export async function main(ns) {
   let index = 0;
   let currentMaxTargets = Math.min(3, potentialTargets.length);
   let serversAffected = 0;
-  let serverCount = getAvailableRamOnServers(ns).length;
+  let loopCount = 0;
 
   while (true) {
+    loopCount++;
     const now = Date.now();
     const targets = potentialTargets.slice(0, currentMaxTargets);
     const targetObj = targets[index];
     const target = targetObj.id;
-    const homeRam = ns.formatNumber(ns.getServerMaxRam('home'), 0, 100000000);
-    const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
+    // ns.print(`${CYAN} --- [  Target: '${target}'  ] --- ${RESET}`);
 
-    ns.print(`${CYAN} --- [  Target: '${target}'  ] --- ${RESET}`);
     const dynamicWaitTime = Math.max(getMinimumWeakenTime(ns, targets, index) * 0.25, 3000);
 
     const currentMoney = ns.getServerMoneyAvailable(target);
@@ -48,11 +47,7 @@ export async function main(ns) {
 
       if (threadsRemaining) {
         targetObj.threadsRemaining = threadsRemaining;
-
-        serverCount = getAvailableRamOnServers(ns).length;
-        ns.print(`Resources maxed; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
-        ns.print(`   Status: Home: ${homeRam}GB  Botnet: ${botRam}GB  ${serverCount} bots `);
-        await ns.sleep(dynamicWaitTime);
+        await waitForResources(ns, dynamicWaitTime);
         index = 0;
         serversAffected = 0;
         continue;
@@ -62,9 +57,16 @@ export async function main(ns) {
         targetObj.expectedCompletion =
           now + SYNCHRONIZE_OFFSET * 2 + ns.formulas.hacking.weakenTime(ns.getServer(target), ns.getPlayer());
       }
+    } else if (targetObj.waitingForGrow && targetObj.expectedCompletion < now) {
+      targetObj.waitingForGrow = false;
+      targetObj.threadsRemaining = 0;
+      targetObj.expectedCompletion = 0;
     }
+    // else if (targetObj.waitingForGrow) {
+    //   ns.print(`      ( Waiting for grow )`);
+    // }
 
-    if (moneyPercent > 0.9) {
+    if (moneyPercent >= 0.9) {
       targetObj.waitingForGrow = false;
       targetObj.threadsRemaining = 0;
       targetObj.expectedCompletion = 0;
@@ -73,19 +75,11 @@ export async function main(ns) {
       const hackLaunched = await launchAttack(ns, target);
 
       if (!hackLaunched) {
-        serverCount = getAvailableRamOnServers(ns).length;
-        ns.print(`Resources maxed; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
-        ns.print(`   Status: Home: ${homeRam}GB  Botnet: ${botRam}GB  ${serverCount} bots `);
-        await ns.sleep(dynamicWaitTime);
+        await waitForResources(ns, dynamicWaitTime);
         index = 0;
         serversAffected = 0;
+        continue;
       }
-    } else if (targetObj.waitingForGrow && targetObj.expectedCompletion < now) {
-      targetObj.waitingForGrow = false;
-      targetObj.threadsRemaining = 0;
-      targetObj.expectedCompletion = 0;
-    } else if (targetObj.waitingForGrow) {
-      ns.print(`      ( Waiting for grow )`);
     }
 
     index++;
@@ -94,10 +88,7 @@ export async function main(ns) {
       if (serversAffected === 0) {
         currentMaxTargets = Math.min(currentMaxTargets + 1, MAX_TARGETS, potentialTargets.length);
         if (currentMaxTargets >= potentialTargets.length) {
-          ns.print(
-            `All viable servers processing; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`,
-          );
-          await ns.sleep(dynamicWaitTime);
+          await waitForResources(ns, dynamicWaitTime, `All viable servers processing (${potentialTargets.length})`);
         }
         await ns.sleep(SYNCHRONIZE_OFFSET);
       }
@@ -108,11 +99,27 @@ export async function main(ns) {
 
     // Very occasionally sleep to prevent the script from appearing to hang
     // when launched with a lot of free RAM
-    if (index % 10 === 7) {
-      await ns.sleep(0);
+    if (loopCount > LOOP_COUNT_BEFORE_REST) {
+      await ns.sleep(SYNCHRONIZE_OFFSET);
+      loopCount = 0;
     }
   }
 }
+
+/** @param {NS} ns */
+const waitForResources = async (ns, dynamicWaitTime, reason = 'Resources maxed') => {
+  const homeRam = ns.formatNumber(ns.getServerMaxRam('home'), 0, 100000000);
+  const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
+  const serverCount = getAvailableRamOnServers(ns).length;
+  const income = ns.formatNumber(ns.getScriptIncome() * 60, 1);
+  const karma = Math.floor(ns.heart.break());
+
+  ns.print(`${reason}; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
+  ns.print(
+    `   --| Income: ${CYAN}${income}${RESET} /min  Home: ${homeRam}GB  Botnet: ${botRam}GB  x${serverCount}   K:${karma} |--`,
+  );
+  await ns.sleep(dynamicWaitTime);
+};
 
 /** @param {NS} ns */
 const launchAttack = async (ns, target) => {
@@ -158,10 +165,13 @@ const launchAttack = async (ns, target) => {
     0,
     10000000,
   );
-  ns.print(`  !! ${target} has ${GREEN}$${ns.formatNumber(currentMoney)} (${(100 * moneyPercent).toFixed(1)}%${RESET}); 
-        ${RED}Launching attack with ${threadCount} threads...${RESET} (${Math.floor(
-    attackCount * unitCount * unitSize,
-  )}GB / ${ram}GB)`);
+  ns.print(
+    `  !! ${CYAN}${target}${RESET} has ${GREEN}$${ns.formatNumber(currentMoney)}${RESET} ${
+      moneyPercent < 0.99 ? (100 * moneyPercent).toFixed(1) + '%' : ''
+    }; ${RED}Launching attack${RESET} with ${threadCount} threads... (${Math.floor(
+      attackCount * unitCount * unitSize,
+    )} / ${ram}GB)`,
+  );
 
   // We have to send out the attacks in "batches" otherwise the servers get completely drained
   // FUTURE: does this work as-is or do we need to offset the batches more?
@@ -298,6 +308,7 @@ const getServers = (ns) => {
     'run4theh111z',
     'alpha-ent',
     'iron-gym',
+    'w0r1d_d43m0n',
     'home',
   ];
   return dynamicServers.concat(hosts.filter((server) => dynamicServers.indexOf(server) === -1));
@@ -411,11 +422,13 @@ const getTargetlist = (ns) => {
         } catch (e) {}
       }
 
+      const updatedServer = ns.getServer(nodeName);
+
       return (
-        server.hasAdminRights &&
-        ns.getServerMoneyAvailable(nodeName) &&
-        server.requiredHackingSkill <= ns.getPlayer().skills.hacking &&
-        nodeName !== 'home'
+        updatedServer.hasAdminRights &&
+        updatedServer.moneyMax &&
+        updatedServer.requiredHackingSkill <= ns.getPlayer().skills.hacking &&
+        !updatedServer.purchasedByPlayer
       );
     })
     .map((id) => {

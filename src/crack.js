@@ -8,5 +8,6 @@ export async function main(ns) {
       await ns.sleep(delay);
     }
     await ns.hack(targetNode);
+    await ns.sleep(100);
   }
 }
