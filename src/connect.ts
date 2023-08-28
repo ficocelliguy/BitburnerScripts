@@ -1,8 +1,12 @@
-import { NS } from '@ns';
+import { AutocompleteData, NS } from '@ns';
 
 interface connectionTree {
   id: string;
   connections: connectionTree[];
+}
+
+export function autocomplete(data: AutocompleteData) {
+  return [...data.servers, '--tail'];
 }
 
 /** @param {NS} ns */
@@ -25,6 +29,10 @@ export async function main(ns: NS) {
     await navigator.clipboard.writeText(connectionString);
     ns.print(connectionString);
   }
+  ['CSEC', 'I.I.I.I', 'avmnite-02h', 'run4theh111z', 'w0r1d_d43m0n'].forEach((server) => {
+    const info = ns.getServer(server);
+    ns.tprint(`${server} (${info.requiredHackingSkill}): ${findConnectionString(ns, server, tree)}`);
+  });
 }
 
 /** @param {NS} ns */

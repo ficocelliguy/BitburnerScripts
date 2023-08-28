@@ -9,6 +9,8 @@ const doc = globalThis['document'];
 
 /** @param {NS} ns */
 export async function main(ns) {
+  killDuplicates(ns);
+
   while (true) {
     // Wait for infiltration minigame to be visible
     while (!identifyInfiltration(ns)) {
@@ -489,4 +491,12 @@ function unwrapEventListeners() {
     delete doc._removeEventListener;
   }
   delete doc.eventListeners;
+}
+
+/** @param {NS} ns */
+function killDuplicates(ns) {
+  const scriptInfo = ns.getRunningScript();
+  ns.ps()
+    .filter((script) => script.filename === scriptInfo.filename && script.pid !== scriptInfo.pid)
+    .forEach((script) => ns.kill(script.pid));
 }

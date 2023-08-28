@@ -10,13 +10,24 @@ const CYAN = '\u001b[36m';
 const GREEN = '\u001b[32m';
 const RED = '\u001b[31m';
 const RESET = '\u001b[0m';
+let currentExp, expTime;
+
+export function autocomplete(data) {
+  return ['--tail', 'true', 'false'];
+}
 
 /** @param {NS} ns */
 export async function main(ns) {
+  if (ns.args[0] !== 'false') {
+    killDuplicates(ns);
+  }
+
   disableLogging(ns);
 
   const potentialTargets = getTargetlist(ns);
   ns.print(potentialTargets.slice(0, MAX_TARGETS));
+  currentExp = currentExp || ns.getPlayer().exp.hacking;
+  expTime = expTime || Date.now();
 
   let index = 0;
   let currentMaxTargets = Math.min(3, potentialTargets.length);
@@ -112,12 +123,25 @@ const waitForResources = async (ns, dynamicWaitTime, reason = 'Resources maxed')
   const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
   const serverCount = getAvailableRamOnServers(ns).length;
   const income = ns.formatNumber(ns.getScriptIncome() * 60, 1);
-  const karma = Math.floor(ns.heart.break());
+  const karma = ns.formatNumber(Math.floor(ns.heart.break()), 1);
+  const player = ns.getPlayer();
+  const targetXp = ns.getServer('w0r1d_d43m0n')?.requiredHackingSkill;
+  const xpRemaining = ns.formulas.skills.calculateExp(targetXp, player.mults.hacking) - player.exp.hacking;
+
+  const gainedXp = player.exp.hacking - currentExp;
+  const timeSinceLastCheck = Date.now() - expTime || 0.01;
+  const xpPerSec = Math.max((gainedXp / timeSinceLastCheck) * 1000, ns.getTotalScriptExpGain());
+
+  const hoursTillEscape = ns.formatNumber(xpRemaining / (xpPerSec * 60 * 60), 2);
 
   ns.print(`${reason}; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
   ns.print(
-    `   --| Income: ${CYAN}${income}${RESET} /min  Home: ${homeRam}GB  Botnet: ${botRam}GB  x${serverCount}   K:${karma} |--`,
+    `   --| Income: ${CYAN}${income}${RESET} /min  Home: ${homeRam}GB  Botnet: ${botRam}GB x${serverCount}  K:${karma}  T-${hoursTillEscape} |--`,
   );
+
+  currentExp = player.exp.hacking;
+  expTime = Date.now();
+
   await ns.sleep(dynamicWaitTime);
 };
 
@@ -337,7 +361,8 @@ const getAvailableRam = (ns) => {
       servers
         .filter((server) => ns.getServer(server).hasAdminRights)
         .reduce((sum, server) => {
-          const available = ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - (server === 'home' ? 16 : 4);
+          const buffer = server === 'home' ? Math.min(64, ns.getServerMaxRam(server) / 4) : 4;
+          const available = ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - buffer;
           return sum + Math.max(available, 0);
         }, 0),
   );
@@ -483,3 +508,11 @@ const disableLogging = (ns) => {
   ns.disableLog('getServerSecurityLevel');
   ns.disableLog('getServerMoneyAvailable');
 };
+
+/** @param {NS} ns */
+function killDuplicates(ns) {
+  const scriptInfo = ns.getRunningScript();
+  ns.ps()
+    .filter((script) => script.filename === scriptInfo.filename && script.pid !== scriptInfo.pid)
+    .forEach((script) => ns.kill(script.pid));
+}

@@ -48,10 +48,10 @@ const updateTreeForNode = async (ns, nodeName, tree, scannedNodes) => {
       ns.write(FILENAME, node + ' : ' + file.filename + `\r\n`);
       ns.write(FILENAME, 'Type: ' + file.type + `\r\n`);
       ns.write(FILENAME, 'Description: ' + file.description + `\r\n`);
-      ns.write(FILENAME, 'Data: ' + file.data.replaceAll('&nbsp;', ' ') + `\r\n`);
+      ns.write(FILENAME, 'Data: ' + ('' + file.data).replaceAll('&nbsp;', ' ') + `\r\n`);
 
       if (file.type === 'Sanitize Parentheses in Expression') {
-        solveSanitizeParens(ns, file.data);
+        solveSanitizeParens('' + file.data);
       }
     });
 
