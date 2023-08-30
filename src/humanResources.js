@@ -18,11 +18,20 @@ export function autocomplete(data) {
 export async function main(ns) {
   killDuplicates(ns);
 
+  const CrimeType = ns.enums.CrimeType;
+  const crimes = [
+    CrimeType.mug,
+    CrimeType.homicide,
+    CrimeType.grandTheftAuto,
+    CrimeType.kidnap,
+    CrimeType.assassination,
+    CrimeType.heist,
+  ];
+
   while (true) {
     const costThreshold = MAX_UPGRADE_COST_FRACTION * ns.getPlayer().money;
 
     // Sync and train up sleeves, then reduce karma with them
-    // TODO: late game sleeve tasks?
     for (let i = 0; i < NUMBER_OF_SLEEVES; i++) {
       const sleeve = ns.sleeve.getSleeve(i);
       const augs = ns.sleeve.getSleevePurchasableAugs(i).filter((a) => a.cost < costThreshold);
@@ -55,6 +64,7 @@ export async function main(ns) {
   }
 }
 
+/** @param {NS} ns */
 function manageGang(ns) {
   ns.print('Checking in on gang...');
 
@@ -67,6 +77,12 @@ function manageGang(ns) {
   const gangInfo = ns.gang.getGangInformation();
   const gangDudes = ns.gang.getMemberNames().map((n) => ns.gang.getMemberInformation(n));
   const equipment = ns.gang.getEquipmentNames().map((n) => ({ name: n, cost: ns.gang.getEquipmentCost(n) }));
+  const repJob =
+    gangInfo.territory < 1
+      ? gangDudes.length >= MAXIMUM_GANG_MEMBERS
+        ? Jobs.territory
+        : Jobs.terrorism
+      : Jobs.trafficArms;
 
   gangDudes.forEach(
     /** @param { GangMemberInfo } dude */
@@ -87,30 +103,29 @@ function manageGang(ns) {
         .forEach((e) => ns.gang.purchaseEquipment(dude.name, e.name));
 
       if (dude.str < STRENGTH_MINIMUM_FOR_ACTION) {
-        dude.task !== Jobs.train && ns.gang.setMemberTask(dude.name, Jobs.train);
+        dude.task !== Jobs.train && setGangJob(ns, dude.name, Jobs.train);
       } else if (dude.task === Jobs.train) {
-        ns.gang.setMemberTask(dude.name, Jobs.terrorism);
+        setGangJob(ns, dude.name, repJob);
       }
     },
   );
 
-  const repJob = gangInfo.territory < 1 ? Jobs.terrorism : Jobs.traffickArms;
-
   if (gangInfo.wantedPenalty < MINIMUM_WANTED_PENALTY) {
     const strongmen = gangDudes.filter((dude) => dude.task === repJob);
     const randomDude = strongmen[Math.floor(Math.random() * strongmen.length)];
-    randomDude && ns.gang.setMemberTask(randomDude.name, Jobs.vigilante);
+    randomDude && setGangJob(ns, randomDude.name, Jobs.vigilante);
   } else {
     const strongmen = gangDudes.filter((dude) => dude.task === Jobs.vigilante);
     const randomDude = strongmen[Math.floor(Math.random() * strongmen.length)];
-    randomDude && ns.gang.setMemberTask(randomDude.name, repJob);
+    randomDude && setGangJob(ns, randomDude.name, repJob);
   }
 
-  if (gangDudes.length >= MAXIMUM_GANG_MEMBERS && !gangDudes.find((dude) => dude.task === Jobs.territory)) {
-    gangDudes
-      .filter((dude) => dude.task === repJob)
-      .slice(0, Math.floor(MAXIMUM_GANG_MEMBERS * (2 / 3)))
-      .forEach((dude) => ns.gang.setMemberTask(dude.name, Jobs.territory));
+  if (
+    gangDudes.length >= MAXIMUM_GANG_MEMBERS &&
+    gangInfo.territory < 1 &&
+    !gangDudes.find((dude) => dude.task === Jobs.territory)
+  ) {
+    gangDudes.filter((dude) => dude.task !== Jobs.train).forEach((dude) => setGangJob(ns, dude.name, Jobs.territory));
   }
 
   const otherGangInfo = Object.keys(ns.gang.getOtherGangInformation())
@@ -128,43 +143,24 @@ function manageGang(ns) {
   }
 
   if (gangInfo.territory >= 1) {
-    gangDudes
-      .filter((dude) => dude.task === Jobs.terrorism)
-      .forEach((dude) => ns.gang.setMemberTask(dude.name, Jobs.traffickArms));
+    gangDudes.forEach((dude) => setGangJob(ns, dude.name, Jobs.trafficArms));
   }
 }
-
-const CrimeType = {
-  shoplift: 'Shoplift',
-  robStore: 'Rob Store',
-  mug: 'Mug',
-  larceny: 'Larceny',
-  dealDrugs: 'Deal Drugs',
-  bondForgery: 'Bond Forgery',
-  traffickArms: 'Traffick Arms',
-  homicide: 'Homicide',
-  grandTheftAuto: 'Grand Theft Auto',
-  kidnap: 'Kidnap',
-  assassination: 'Assassination',
-  heist: 'Heist',
-};
-
-const crimes = [
-  CrimeType.mug,
-  CrimeType.homicide,
-  CrimeType.grandTheftAuto,
-  CrimeType.kidnap,
-  CrimeType.assassination,
-  CrimeType.heist,
-];
 
 const Jobs = {
   territory: 'Territory Warfare',
   vigilante: 'Vigilante Justice',
   terrorism: 'Terrorism',
-  traffickArms: 'Traffick Arms',
+  trafficArms: 'Traffick Illegal Arms',
   train: 'Train Combat',
 };
+
+/** @param {NS} ns */
+function setGangJob(ns, name, job) {
+  if (ns.gang.getMemberInformation(name).task !== job) {
+    ns.gang.setMemberTask(name, job);
+  }
+}
 
 function getName() {
   return `${getNamePrefix()}${getNameFirstHalf()}${getNameSecondHalf()}${getNameSuffix()}`;
