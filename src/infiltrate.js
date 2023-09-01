@@ -2,16 +2,65 @@
   This is a work-in-progress automation of the infiltration minigame.
  */
 
+//import ReactTestUtils from 'react-dom/test-utils';
+
+const factions = {
+  Illuminati: 'Illuminati',
+  Daedalus: 'Daedalus',
+  TheCovenant: 'The Covenant',
+  ECorp: 'ECorp',
+  MegaCorp: 'MegaCorp',
+  BachmanAssociates: 'Bachman & Associates',
+  BladeIndustries: 'Blade Industries',
+  NWO: 'NWO',
+  ClarkeIncorporated: 'Clarke Incorporated',
+  OmniTekIncorporated: 'OmniTek Incorporated',
+  FourSigma: 'Four Sigma',
+  KuaiGongInternational: 'KuaiGong International',
+  FulcrumSecretTechnologies: 'Fulcrum Secret Technologies',
+  BitRunners: 'BitRunners',
+  TheBlackHand: 'The Black Hand',
+  NiteSec: 'NiteSec',
+  Aevum: 'Aevum',
+  Chongqing: 'Chongqing',
+  Ishima: 'Ishima',
+  NewTokyo: 'New Tokyo',
+  Sector12: 'Sector-12',
+  Volhaven: 'Volhaven',
+  SpeakersForTheDead: 'Speakers for the Dead',
+  TheDarkArmy: 'The Dark Army',
+  TheSyndicate: 'The Syndicate',
+  Silhouette: 'Silhouette',
+  Tetrads: 'Tetrads',
+  SlumSnakes: 'Slum Snakes',
+  Netburners: 'Netburners',
+  TianDiHui: 'Tian Di Hui',
+  CyberSec: 'CyberSec',
+  Bladeburners: 'Bladeburners',
+  ChurchOfTheMachineGod: 'Church of the Machine God',
+  ShadowsOfAnarchy: 'Shadows of Anarchy',
+};
+
 const TITLE_TAG = 'h4';
-const TARGET_FACTION = 'Black Hand';
 
 const doc = globalThis['document'];
 
+export function autocomplete() {
+  const factionList = Object.values(factions);
+  return [...factionList, '--tail'];
+}
+
 /** @param {NS} ns */
 export async function main(ns) {
-  killDuplicates(ns);
+  const targetFaction = ns.args[0] || factions.Daedalus;
+  const runs = ns.args[1] || 1;
 
-  while (true) {
+  killDuplicates(ns);
+  ns.disableLog('sleep');
+
+  for (let i = 0; i < runs; i++) {
+    await startInfiltration(ns);
+
     // Wait for infiltration minigame to be visible
     while (!identifyInfiltration(ns)) {
       await ns.sleep(300);
@@ -22,7 +71,7 @@ export async function main(ns) {
 
     let title = getGameTitle(ns);
     while (title) {
-      ns.print(`Minigame Detected! ${title}`);
+      title.indexOf('Get Ready') === -1 && ns.print(`Minigame Detected! ${title}`);
       //console.log(`Title detected: ${title}`);
 
       if (contains(title, 'Match the symbols')) {
@@ -42,7 +91,7 @@ export async function main(ns) {
       } else if (contains(title, 'Cut the wires')) {
         await playCutWires(ns);
       } else if (contains(title, 'Infiltration successful')) {
-        await handleSuccess(ns);
+        await handleSuccess(ns, targetFaction);
       } else if (contains(title, 'Get Ready')) {
         await ns.sleep(100);
       } else {
@@ -62,41 +111,25 @@ export async function main(ns) {
 }
 
 /** @param {NS} ns */
-const handleSuccess = async (ns) => {
+const handleSuccess = async (ns, targetFaction) => {
   ns.print('Success!');
-  await ns.sleep(1000);
+  await ns.sleep(400);
+  await setSelectionValue(doc.querySelector('.MuiInputBase-root [role="button"] ~ input'), targetFaction);
 
-  // doc.querySelector('.MuiInputBase-root').click();
-  // await ns.sleep(40);
-  // await sendKeyboardEvent(ns, ' ');
-  //
-  // while (doc.activeElement.innerText?.indexOf(TARGET_FACTION) === -1) {
-  //   await sendKeyboardEvent(ns, 40);
-  // }
-  //
-  // await sendKeyboardEvent(ns, 13);
-  // await sendKeyboardEvent(ns, 40);
-  // await sendKeyboardEvent(ns, ' ');
-  //
-  // await ns.sleep(100);
-  //
-  // while (doc.activeElement.innerText !== 'Job') {
-  //   await sendKeyboardEvent(ns, 9);
-  // }
-  //
-  // await sendKeyboardEvent(ns, ' ');
-  //
-  // while (doc.activeElement.innerText?.indexOf('Infiltrate ') === -1) {
-  //   await sendKeyboardEvent(ns, 9);
-  // }
-  //
-  // await sendKeyboardEvent(ns, ' ');
-  //
-  // while (doc.activeElement.innerText?.indexOf('Start ') === -1) {
-  //   await sendKeyboardEvent(ns, 9);
-  // }
-  //
-  // await sendKeyboardEvent(ns, ' ');
+  await ns.sleep(200);
+  await click(doc.querySelector('.MuiInputBase-root ~ button'));
+
+  await ns.sleep(500);
+};
+
+const startInfiltration = async (ns) => {
+  await click([...doc.querySelectorAll('[role="button"]')].find((b) => b.innerText.indexOf('City') !== -1));
+  await ns.sleep(500);
+  await click(doc.querySelector('[aria-label="ECorp"], [aria-label="MegaCorp"]'));
+  await ns.sleep(500);
+  await click([...doc.getElementsByTagName('button')].find((b) => b.innerText.indexOf('Infiltrate') !== -1));
+  await ns.sleep(500);
+  await click([...doc.getElementsByTagName('button')].find((b) => b.innerText.indexOf('Start') !== -1));
 };
 
 /** @param {NS} ns */
@@ -380,6 +413,24 @@ const identifyInfiltration = () => {
   return !!Array.from(doc.getElementsByTagName('button')).find((node) => node.innerText.indexOf('Cancel In') !== -1);
 };
 
+async function click(elem) {
+  const e = elem[Object.keys(elem)[1]];
+  const event = e.onClick || e.onMouseDown;
+  event &&
+    (await event({
+      isTrusted: true,
+    }));
+}
+
+async function setSelectionValue(elem, newValue) {
+  const e = elem[Object.keys(elem)[1]];
+  const event = e.onChange;
+  event &&
+    (await event({
+      target: { value: newValue },
+    }));
+}
+
 /**
  * Wrap all event listeners with a custom function that injects
  * the "isTrusted" flag.
@@ -397,7 +448,7 @@ function wrapEventListeners() {
       let handler = false;
 
       // For this script, we only want to modify "keydown" events.
-      if ('keydown' === type || 'click' === type) {
+      if ('keydown' === type || 'click' === type || 'mousedown' === type || 'focus' === type) {
         handler = function (...args) {
           if (!args[0].isTrusted) {
             const hackedEv = {};
