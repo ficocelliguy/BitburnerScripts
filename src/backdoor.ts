@@ -99,6 +99,7 @@ const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth
   });
 };
 
+/** @param {NS} ns */
 const connect = async (ns: NS, target: string) => {
   const scannedNodes = ['home'];
   const tree: connectionTree = {
