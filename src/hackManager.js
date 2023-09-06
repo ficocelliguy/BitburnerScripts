@@ -344,11 +344,11 @@ const getAvailableRamOnServers = (ns) => {
   return servers
     .filter((server) => ns.getServer(server).hasAdminRights)
     .map((server) => {
-      const freeRam = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
-      const savedSpace = server === 'home' ? Math.min(20, freeRam / 4) : 0;
+      const buffer = server === 'home' ? Math.min(64, ns.getServerMaxRam(server) / 4) : 4;
+      const freeRam = ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - buffer;
       return {
         id: server,
-        ram: freeRam - savedSpace,
+        ram: freeRam,
       };
     });
 };
@@ -491,22 +491,7 @@ const getMinimumWeakenTime = (ns, targets, index) => {
 
 /** @param {NS} ns */
 const disableLogging = (ns) => {
-  ns.disableLog('scp');
-  ns.disableLog('sleep');
-  ns.disableLog('scan');
-  ns.disableLog('exec');
-  ns.disableLog('brutessh');
-  ns.disableLog('ftpcrack');
-  ns.disableLog('relaysmtp');
-  ns.disableLog('httpworm');
-  ns.disableLog('sqlinject');
-  ns.disableLog('nuke');
-  ns.disableLog('getServerMaxRam');
-  ns.disableLog('getServerUsedRam');
-  ns.disableLog('getServerMinSecurityLevel');
-  ns.disableLog('getServerMaxMoney');
-  ns.disableLog('getServerSecurityLevel');
-  ns.disableLog('getServerMoneyAvailable');
+  ns.disableLog('ALL');
 };
 
 /** @param {NS} ns */
