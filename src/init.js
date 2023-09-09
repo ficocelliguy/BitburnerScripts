@@ -6,7 +6,9 @@ export async function main(ns) {
     ns.singularity.travelToCity(ns.enums.CityName.Aevum);
   }
 
-  ns.run(INFILTRATE_SCRIPT);
+  ns.singularity.commitCrime(ns.enums.CrimeType.homicide, false);
+
+  ns.run(INFILTRATE_SCRIPT, 1, 'nobeep');
 
   while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
     await ns.sleep(1000);
@@ -24,13 +26,19 @@ export async function main(ns) {
     // ns.print("Upgraded ram!")
   }
 
+  ns.stock.purchaseWseAccount();
+  ns.stock.purchaseTixApi();
+
   ns.run('humanResources.js');
   ns.run('hackManager.js');
+  ns.run('stock.js');
   ns.run('buyServer.js');
+
+  // ns.run(INFILTRATE_SCRIPT, 1, 4);
 
   await ns.sleep(30000);
   ns.run('backdoor.js');
 
-  await ns.sleep(90000);
+  await ns.sleep(120000);
   ns.run('backdoor.js');
 }

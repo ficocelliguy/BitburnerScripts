@@ -1,4 +1,4 @@
-const NUMBER_OF_SLEEVES = 6;
+const NUMBER_OF_SLEEVES = 7;
 const MIN_SLEEVE_SHOCK = 90;
 const MIN_SLEEVE_SYNC = 95;
 
@@ -41,17 +41,18 @@ export async function main(ns) {
         // ns.sleeve.setToSynchronize(i);
       } else if (augs.length && !sleeve.shock) {
         augs.forEach((aug) => ns.sleeve.purchaseSleeveAug(i, aug.name));
-      } else if (!ns.gang.inGang() && ns.formulas.work.crimeSuccessChance(sleeve, CrimeType.homicide) > 0.8) {
+      } else if (!ns.gang.inGang() && ns.formulas.work.crimeSuccessChance(sleeve, CrimeType.homicide) > 0.3) {
         ns.sleeve.setToCommitCrime(i, CrimeType.homicide);
       } else {
         const newCrime =
-          [...crimes].reverse().find((c) => ns.formulas.work.crimeSuccessChance(sleeve, c) > 0.9) || CrimeType.mug;
+          [...crimes].reverse().find((c) => ns.formulas.work.crimeSuccessChance(sleeve, c) > 0.7) || CrimeType.mug;
         ns.sleeve.setToCommitCrime(i, newCrime);
       }
     }
 
     // attempt to join gang until it is finally successful
     if (!ns.gang.inGang()) {
+      ns.singularity.joinFaction('Slum Snakes');
       ns.gang.createGang('Slum Snakes');
       ns.gang.inGang() && ns.print('Gang successfully created!');
     }
@@ -195,6 +196,8 @@ function getNameFirstHalf() {
 function getNameSecondHalf() {
   const halves = [
     'y',
+    'ii',
+    'an',
     'son',
     'et',
     'ally',

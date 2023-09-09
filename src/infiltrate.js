@@ -39,6 +39,9 @@ const factions = {
   Bladeburners: 'Bladeburners',
   ChurchOfTheMachineGod: 'Church of the Machine God',
   ShadowsOfAnarchy: 'Shadows of Anarchy',
+  Money: '$',
+  Money2: '$$',
+  Money3: '$$$',
 };
 
 const TITLE_TAG = 'h4';
@@ -52,27 +55,40 @@ export function autocomplete() {
 
 /** @param {NS} ns */
 export async function main(ns) {
+  ns.tail();
+  ns.resizeTail(420, 200);
+  ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(document.body.scrollHeight * 0.7));
+
   const factionList = Object.values(factions);
   const targetFactions = ns.args
     .filter((a) => !`${a}`.match(/^[0-9]+$/) && a !== '--tail' && a !== '-t')
     .map((t) => t.replaceAll('_', ' '))
     .join(' ');
   const targetedFactionList = factionList.filter((f) => targetFactions.indexOf(f) !== -1);
-  const targets = targetedFactionList.length ? targetedFactionList : [' ']; // Ignore faction if hacking for money
+  const targets = targetedFactionList.length ? targetedFactionList : ['$$$']; // Ignore faction if hacking for money
   const runs = ns.args.find((a) => `${a}`.match(/^[0-9]+$/)) || 1;
+  const playBeep = !ns.args.find((a) => a === 'nobeep');
 
   killDuplicates(ns);
   ns.disableLog('sleep');
 
-  for (const targetFaction of targets) {
+  for (const index in targets) {
+    const targetFaction = targets[index];
     for (let i = 0; i < runs; i++) {
       await startInfiltration(ns);
       await playMinigame(ns, targetFaction);
+
+      ns.resizeTail(420, 200);
+      ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(document.body.scrollHeight * 0.7));
+      ns.print(`Infiltrated ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length})`);
     }
   }
-  await beep();
-  await ns.sleep(300);
-  await beep();
+  if (playBeep) {
+    await beep();
+    await ns.sleep(300);
+    await beep();
+  }
+  ns.closeTail();
 }
 
 /** @param {NS} ns */
@@ -81,13 +97,12 @@ async function playMinigame(ns, targetFaction) {
   while (!identifyInfiltration(ns)) {
     await ns.sleep(300);
   }
-  ns.print('Infiltration detected!');
 
   wrapEventListeners();
 
   let title = getGameTitle(ns);
   while (title) {
-    title.indexOf('Get Ready') === -1 && ns.print(`Minigame Detected! ${title}`);
+    //title.indexOf('Get Ready') === -1 && ns.print(`Minigame Detected! ${title}`);
     //console.log(`Title detected: ${title}`);
 
     if (contains(title, 'Match the symbols')) {
@@ -111,7 +126,7 @@ async function playMinigame(ns, targetFaction) {
     } else if (contains(title, 'Get Ready')) {
       await ns.sleep(100);
     } else {
-      console.log('Minigame not yet implemented');
+      //console.log('Minigame not yet implemented');
       await ns.sleep(500);
     }
 
@@ -119,7 +134,7 @@ async function playMinigame(ns, targetFaction) {
     title = getGameTitle(ns);
   }
 
-  ns.print('no title detected, ending infiltration');
+  //ns.print('no title detected, ending infiltration');
 
   unwrapEventListeners();
   await ns.sleep(1000);
@@ -134,7 +149,6 @@ async function beep() {
 
 /** @param {NS} ns */
 const handleSuccess = async (ns, targetFaction) => {
-  ns.print('Success!');
   await ns.sleep(400);
   await setSelectionValue(doc.querySelector('.MuiInputBase-root [role="button"] ~ input'), targetFaction);
 
@@ -189,8 +203,6 @@ const playCutWires = async (ns) => {
 
 /** @param {NS} ns */
 const playRememberMines = async (ns) => {
-  ns.print('remember mines detected ... ');
-
   const querySelector = [9, 12, 16, 20, 25, 30, 36, 42, 48]
     .map((i) => `* p:first-child:nth-last-child(${i}), * p:first-child:nth-last-child(${i}) ~ p`)
     .join(', ');
@@ -321,7 +333,6 @@ const playEnterCode = async (ns) => {
   let arrow = getArrow();
 
   while (arrow) {
-    ns.print(`Arrow detected: ${arrow}`);
     switch (arrow) {
       case '→':
         await sendKeyboardEvent(ns, 'D');
@@ -340,8 +351,6 @@ const playEnterCode = async (ns) => {
     await ns.sleep(30);
     arrow = getArrow();
   }
-
-  ns.print(`No arrows detected, ending Enter the Code minigame`);
 };
 
 /** @param {NS} ns */
@@ -358,8 +367,6 @@ const playTypeBackwards = async (ns) => {
 };
 /** @param {NS} ns */
 const playMatchSymbols = async (ns) => {
-  ns.print('Match symbols detected ... ');
-
   const answers = Array.from(doc.querySelectorAll('h5 span')).map((el) => el.innerText.trim());
 
   const querySelector = [9, 12, 16, 20, 25, 30, 36, 42, 48]

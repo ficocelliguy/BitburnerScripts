@@ -23,6 +23,9 @@ export async function main(ns) {
   }
 
   disableLogging(ns);
+  ns.tail();
+  ns.resizeTail(820, 120);
+  ns.moveTail(300, 30);
 
   const potentialTargets = getTargetlist(ns);
   ns.print(potentialTargets.slice(0, MAX_TARGETS));
@@ -125,8 +128,11 @@ const waitForResources = async (ns, dynamicWaitTime, reason = 'Resources maxed')
   const income = ns.formatNumber(ns.getScriptIncome() * 60, 1);
   const karma = ns.formatNumber(Math.floor(ns.heart.break()), 1);
   const player = ns.getPlayer();
-  const targetXp = ns.getServer('w0r1d_d43m0n')?.requiredHackingSkill;
-  const xpRemaining = ns.formulas.skills.calculateExp(targetXp, player.mults.hacking) - player.exp.hacking;
+  const targetLvl = ns.getServer('w0r1d_d43m0n')?.requiredHackingSkill;
+  const xpMult = player.mults.hacking_exp * ns.getBitNodeMultipliers().HackExpGain;
+  const lvlMult = player.mults.hacking * ns.getBitNodeMultipliers().HackingLevelMultiplier;
+  const xpNeeded = ns.formulas.skills.calculateExp(targetLvl, lvlMult);
+  const xpRemaining = xpNeeded / xpMult - player.exp.hacking;
 
   const gainedXp = player.exp.hacking - currentExp;
   const timeSinceLastCheck = Date.now() - expTime || 0.01;
