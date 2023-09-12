@@ -111,7 +111,7 @@ async function playMinigame(ns, targetFaction) {
       await playEnterCode(ns);
     } else if (contains(title, 'when his guard is')) {
       await playAttackGuard(ns);
-    } else if (contains(title, 'Type it backward')) {
+    } else if (contains(title, 'Type it')) {
       await playTypeBackwards(ns);
     } else if (contains(title, 'Close the brackets')) {
       await playMatchBrackets(ns);
