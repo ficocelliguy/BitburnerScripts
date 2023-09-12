@@ -37,7 +37,6 @@ const factions = {
   TianDiHui: 'Tian Di Hui',
   CyberSec: 'CyberSec',
   Bladeburners: 'Bladeburners',
-  ChurchOfTheMachineGod: 'Church of the Machine God',
   ShadowsOfAnarchy: 'Shadows of Anarchy',
   Money: '$',
   Money2: '$$',
@@ -57,7 +56,7 @@ export function autocomplete() {
 export async function main(ns) {
   ns.tail();
   ns.resizeTail(420, 200);
-  ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(document.body.scrollHeight * 0.7));
+  ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
 
   const factionList = Object.values(factions);
   const targetFactions = ns.args
@@ -79,7 +78,7 @@ export async function main(ns) {
       await playMinigame(ns, targetFaction);
 
       ns.resizeTail(420, 200);
-      ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(document.body.scrollHeight * 0.7));
+      ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
       ns.print(`Infiltrated ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length})`);
     }
   }
@@ -111,7 +110,7 @@ async function playMinigame(ns, targetFaction) {
       await playEnterCode(ns);
     } else if (contains(title, 'when his guard is')) {
       await playAttackGuard(ns);
-    } else if (contains(title, 'Type it backward')) {
+    } else if (contains(title, 'Type it')) {
       await playTypeBackwards(ns);
     } else if (contains(title, 'Close the brackets')) {
       await playMatchBrackets(ns);

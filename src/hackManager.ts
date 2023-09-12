@@ -1,3 +1,5 @@
+import { NS } from '@ns';
+
 const WEAKEN_SCRIPT = 'weaken.js';
 const GROW_SCRIPT = 'grow.js';
 const HACK_SCRIPT = 'crack.js';
@@ -10,14 +12,22 @@ const CYAN = '\u001b[36m';
 const GREEN = '\u001b[32m';
 const RED = '\u001b[31m';
 const RESET = '\u001b[0m';
-let currentExp, expTime;
+let currentExp: number, expTime: number;
 
-export function autocomplete(data) {
+type ServerInfo = {
+  score: number;
+  id: string;
+  waitingForGrow: boolean;
+  threadsRemaining: number;
+  expectedCompletion: number;
+};
+
+export function autocomplete() {
   return ['--tail', 'true', 'false'];
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
+export async function main(ns: NS) {
   if (ns.args[0] !== 'false') {
     killDuplicates(ns);
   }
@@ -43,7 +53,6 @@ export async function main(ns) {
     const targets = potentialTargets.slice(0, currentMaxTargets);
     const targetObj = targets[index];
     const target = targetObj.id;
-    // ns.print(`${CYAN} --- [  Target: '${target}'  ] --- ${RESET}`);
 
     const dynamicWaitTime = Math.max(getMinimumWeakenTime(ns, targets, index) * 0.25, 3000);
 
@@ -53,11 +62,11 @@ export async function main(ns) {
 
     if (!targetObj.waitingForGrow && moneyPercent < 0.9) {
       serversAffected++;
-      weakenTargetToMin(ns, target, WEAKEN_SCRIPT, HACK_SCRIPT);
+      weakenTargetToMin(ns, target);
 
       const threadsRemaining = targetObj.waitingForGrow
         ? 0
-        : growTargetToMax(ns, target, GROW_SCRIPT, WEAKEN_SCRIPT, targetObj.threadsRemaining || 0);
+        : growTargetToMax(ns, target, targetObj.threadsRemaining || 0);
 
       if (threadsRemaining) {
         targetObj.threadsRemaining = threadsRemaining;
@@ -120,15 +129,16 @@ export async function main(ns) {
   }
 }
 
-/** @param {NS} ns */
-const waitForResources = async (ns, dynamicWaitTime, reason = 'Resources maxed') => {
+const waitForResources = async (ns: NS, dynamicWaitTime: number, reason = 'Resources maxed') => {
   const homeRam = ns.formatNumber(ns.getServerMaxRam('home'), 0, 100000000);
   const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
   const serverCount = getAvailableRamOnServers(ns).length;
-  const income = ns.formatNumber(ns.getScriptIncome() * 60, 1);
+  const income = ns.formatNumber(ns.getTotalScriptIncome()[0] * 60, 1);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const karma = ns.formatNumber(Math.floor(ns.heart.break()), 1);
   const player = ns.getPlayer();
-  const targetLvl = ns.getServer('w0r1d_d43m0n')?.requiredHackingSkill;
+  const targetLvl = ns.getServer('w0r1d_d43m0n')?.requiredHackingSkill ?? 0;
   const xpMult = player.mults.hacking_exp * ns.getBitNodeMultipliers().HackExpGain;
   const lvlMult = player.mults.hacking * ns.getBitNodeMultipliers().HackingLevelMultiplier;
   const xpNeeded = ns.formulas.skills.calculateExp(targetLvl, lvlMult);
@@ -151,8 +161,7 @@ const waitForResources = async (ns, dynamicWaitTime, reason = 'Resources maxed')
   await ns.sleep(dynamicWaitTime);
 };
 
-/** @param {NS} ns */
-const launchAttack = async (ns, target) => {
+const launchAttack = async (ns: NS, target: string) => {
   const f = ns.formulas.hacking;
   const currentMoney = ns.getServerMoneyAvailable(target);
   const maxMoney = ns.getServerMaxMoney(target);
@@ -163,7 +172,6 @@ const launchAttack = async (ns, target) => {
   const wTime = hTime * 4;
   const gTime = hTime * 3.2;
   const hPercent = f.hackPercent(ns.getServer(target), ns.getPlayer());
-  const gPercent = f.growPercent(ns.getServer(target), 1, ns.getPlayer(), 1) - 1;
 
   const hSize = ns.getScriptRam(HACK_SCRIPT);
   const wSize = ns.getScriptRam(WEAKEN_SCRIPT);
@@ -229,11 +237,10 @@ const launchAttack = async (ns, target) => {
   return true;
 };
 
-/** @param {NS} ns */
-const weakenTargetToMin = (ns, target) => {
+const weakenTargetToMin = (ns: NS, target: string) => {
   const currentSecurity = ns.getServerSecurityLevel(target);
   const minSecurity = ns.getServerMinSecurityLevel(target);
-  let wThreads = Math.floor((currentSecurity - minSecurity) / 0.05);
+  const wThreads = Math.floor((currentSecurity - minSecurity) / 0.05);
 
   //ns.print("Weaken threads required: " + wThreads);
 
@@ -242,8 +249,7 @@ const weakenTargetToMin = (ns, target) => {
   return remainingThreads;
 };
 
-/** @param {NS} ns */
-const growTargetToMax = (ns, target, GROW_SCRIPT, WEAKEN_SCRIPT, priorThreads = 0) => {
+const growTargetToMax = (ns: NS, target: string, priorThreads = 0) => {
   const currentMoney = Math.max(ns.getServerMoneyAvailable(target), 1);
   const maxMoney = ns.getServerMaxMoney(target);
   const priorGrowthPercent = priorThreads
@@ -265,8 +271,7 @@ const growTargetToMax = (ns, target, GROW_SCRIPT, WEAKEN_SCRIPT, priorThreads = 
   return threadsRemaining;
 };
 
-/** @param {NS} ns */
-const getServers = (ns) => {
+const getServers = (ns: NS) => {
   const dynamicServers = ns.scan('home');
   const hosts = [
     'n00dles',
@@ -344,8 +349,7 @@ const getServers = (ns) => {
   return dynamicServers.concat(hosts.filter((server) => dynamicServers.indexOf(server) === -1));
 };
 
-/** @param {NS} ns */
-const getAvailableRamOnServers = (ns) => {
+const getAvailableRamOnServers = (ns: NS) => {
   const servers = getServers(ns);
   return servers
     .filter((server) => ns.getServer(server).hasAdminRights)
@@ -359,8 +363,7 @@ const getAvailableRamOnServers = (ns) => {
     });
 };
 
-/** @param {NS} ns */
-const getAvailableRam = (ns) => {
+const getAvailableRam = (ns: NS) => {
   const servers = getServers(ns);
   return Math.floor(
     0.95 *
@@ -374,8 +377,7 @@ const getAvailableRam = (ns) => {
   );
 };
 
-/** @param {NS} ns */
-const getMaxRam = (ns, addBuffer = true) => {
+const getMaxRam = (ns: NS, addBuffer = true) => {
   const servers = getServers(ns);
   return Math.floor(
     (addBuffer ? 0.95 : 1) *
@@ -387,8 +389,14 @@ const getMaxRam = (ns, addBuffer = true) => {
   );
 };
 
-/** @param {NS} ns */
-const deployDistributedThreads = (ns, scriptName, target, threads, offset = 0, repeat = 1) => {
+const deployDistributedThreads = (
+  ns: NS,
+  scriptName: string,
+  target: string,
+  threads: number,
+  offset = 0,
+  repeat = 1,
+) => {
   if (!threads) {
     return 0;
   }
@@ -426,8 +434,7 @@ const deployDistributedThreads = (ns, scriptName, target, threads, offset = 0, r
   return threadsRemaining;
 };
 
-/** @param {NS} ns */
-const getTargetlist = (ns) => {
+const getTargetlist = (ns: NS): ServerInfo[] => {
   const servers = getServers(ns);
   const results = servers
     .filter((nodeName) => {
@@ -458,7 +465,7 @@ const getTargetlist = (ns) => {
       return (
         updatedServer.hasAdminRights &&
         updatedServer.moneyMax &&
-        updatedServer.requiredHackingSkill <= ns.getPlayer().skills.hacking &&
+        (updatedServer.requiredHackingSkill ?? 0) <= ns.getPlayer().skills.hacking &&
         !updatedServer.purchasedByPlayer
       );
     })
@@ -478,31 +485,30 @@ const getTargetlist = (ns) => {
       return {
         id: id,
         score: Math.round((10 / wTime) * maxMoney * chance * percent),
+        waitingForGrow: false,
+        threadsRemaining: 0,
+        expectedCompletion: 0,
       };
     })
     .sort((a, b) => b.score - a.score);
 
-  return results.length ? results : [{ id: 'foodnstuff' }];
+  return results.length
+    ? results
+    : [{ id: 'foodnstuff', score: 1, waitingForGrow: false, threadsRemaining: 0, expectedCompletion: 0 }];
 };
 
-const getMinimumWeakenTime = (ns, targets, index) => {
-  const shortestWeak = targets
+const getMinimumWeakenTime = (ns: NS, targets: ServerInfo[], index: number) =>
+  targets
     .slice(0, index)
     .reduce(
       (minimum, node) => Math.min(minimum, ns.formulas.hacking.weakenTime(ns.getServer(node.id), ns.getPlayer())),
       ns.formulas.hacking.weakenTime(ns.getServer(targets[0].id), ns.getPlayer()),
     );
-  return shortestWeak;
-};
 
-/** @param {NS} ns */
-const disableLogging = (ns) => {
-  ns.disableLog('ALL');
-};
+const disableLogging = (ns: NS) => ns.disableLog('ALL');
 
-/** @param {NS} ns */
-function killDuplicates(ns) {
-  const scriptInfo = ns.getRunningScript();
+function killDuplicates(ns: NS) {
+  const scriptInfo = ns.getRunningScript()!;
   ns.ps()
     .filter((script) => script.filename === scriptInfo.filename && script.pid !== scriptInfo.pid)
     .forEach((script) => ns.kill(script.pid));

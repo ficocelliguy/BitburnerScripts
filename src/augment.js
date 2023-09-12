@@ -15,10 +15,16 @@ export async function main(ns) {
           // ns.print("Purchasing aug...")
         }
 
-        ns.singularity.purchaseAugmentation(f, 'SoA - phyzical WKS harmonizer');
-        ns.singularity.purchaseAugmentation(f, 'The Red Pill');
+        specialAugments.forEach((aug) => ns.singularity.purchaseAugmentation(f, aug));
       }
     });
+  }
+
+  while (ns.singularity.upgradeHomeRam()) {
+    // ns.print("Upgraded ram!")
+  }
+  while (ns.singularity.upgradeHomeCores()) {
+    // ns.print("Upgraded cores!")
   }
 
   ns.singularity.installAugmentations('init.js');
@@ -80,4 +86,12 @@ const augmentsToInstall = [
   "Stanek's Gift - Genesis",
   "Stanek's Gift - Awakening",
   "Stanek's Gift - Serenity",
+];
+
+const specialAugments = [
+  'SoA - phyzical WKS harmonizer',
+  'SoA - Wisdom of Athena',
+  'SoA - Trickery of Hermes',
+  'SoA - Chaos of Dionysus',
+  'The Red Pill',
 ];

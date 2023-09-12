@@ -1,7 +1,11 @@
+import { NS } from '@ns';
+
 const INFILTRATE_SCRIPT = 'infiltrate.js';
 
 /** @param {NS} ns */
-export async function main(ns) {
+export async function main(ns: NS) {
+  ns.stanek.acceptGift();
+
   if (ns.getPlayer().money > 200000) {
     ns.singularity.travelToCity(ns.enums.CityName.Aevum);
   }
@@ -31,10 +35,16 @@ export async function main(ns) {
 
   ns.run('humanResources.js');
   ns.run('hackManager.js');
-  ns.run('stock.js');
-  ns.run('buyServer.js');
+  //ns.run('stocks.js');
+  //ns.run('buyServer.js');
 
-  // ns.run(INFILTRATE_SCRIPT, 1, 4);
+  ns.run('exec.js', 1, 'charge.js');
+
+  ns.run(INFILTRATE_SCRIPT, 1, 4, 'Slum Snakes');
+
+  while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
+    await ns.sleep(1000);
+  }
 
   await ns.sleep(30000);
   ns.run('backdoor.js');

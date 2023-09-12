@@ -1,3 +1,5 @@
+import { NS, AutocompleteData } from '@ns';
+
 const NUMBER_OF_SLEEVES = 7;
 const MIN_SLEEVE_SHOCK = 90;
 const MIN_SLEEVE_SYNC = 95;
@@ -10,12 +12,12 @@ const STRENGTH_MINIMUM_FOR_ACTION = 600;
 const MAXIMUM_GANG_MEMBERS = 12;
 const WARFARE_START_POWER_RATIO = 2;
 
-export function autocomplete(data) {
+export function autocomplete(data: AutocompleteData) {
   return ['--tail'];
 }
 
 /** @param {NS} ns */
-export async function main(ns) {
+export async function main(ns: NS) {
   killDuplicates(ns);
 
   const CrimeType = ns.enums.CrimeType;
@@ -41,7 +43,7 @@ export async function main(ns) {
         // ns.sleeve.setToSynchronize(i);
       } else if (augs.length && !sleeve.shock) {
         augs.forEach((aug) => ns.sleeve.purchaseSleeveAug(i, aug.name));
-      } else if (!ns.gang.inGang() && ns.formulas.work.crimeSuccessChance(sleeve, CrimeType.homicide) > 0.3) {
+      } else if (!ns.gang.inGang() && ns.formulas.work.crimeSuccessChance(sleeve, CrimeType.homicide) > 0.05) {
         ns.sleeve.setToCommitCrime(i, CrimeType.homicide);
       } else {
         const newCrime =
@@ -66,7 +68,7 @@ export async function main(ns) {
 }
 
 /** @param {NS} ns */
-function manageGang(ns) {
+function manageGang(ns: NS) {
   ns.print('Checking in on gang...');
 
   const costThreshold = MAX_UPGRADE_COST_FRACTION * ns.getPlayer().money;
@@ -89,7 +91,7 @@ function manageGang(ns) {
     /** @param { GangMemberInfo } dude */
     (dude) => {
       // ascend if the new multipliers will be high enough
-      const ascResult = ns.gang.getAscensionResult(dude.name)?.str;
+      const ascResult = ns.gang.getAscensionResult(dude.name)?.str ?? 0;
       const ascensionThreshold = gangInfo.territory < 1 ? WARTIME_ASCENSION_RATIO : PEACETIME_ASCENSION_RATIO;
       if (ascResult > ascensionThreshold) {
         ns.gang.ascendMember(dude.name);
@@ -157,7 +159,7 @@ const Jobs = {
 };
 
 /** @param {NS} ns */
-function setGangJob(ns, name, job) {
+function setGangJob(ns: NS, name: string, job: string) {
   if (ns.gang.getMemberInformation(name).task !== job) {
     ns.gang.setMemberTask(name, job);
   }
@@ -282,9 +284,9 @@ function getNameSuffix() {
 }
 
 /** @param {NS} ns */
-function killDuplicates(ns) {
+function killDuplicates(ns: NS) {
   const scriptInfo = ns.getRunningScript();
   ns.ps()
-    .filter((script) => script.filename === scriptInfo.filename && script.pid !== scriptInfo.pid)
+    .filter((script) => script.filename === scriptInfo?.filename && script.pid !== scriptInfo?.pid)
     .forEach((script) => ns.kill(script.pid));
 }

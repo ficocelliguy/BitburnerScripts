@@ -6,7 +6,7 @@ export function autocomplete() {
 
 /** @param {NS} ns */
 export async function main(ns: NS) {
-  const servers = ['CSEC', 'I.I.I.I', 'avmnite-02h', 'run4theh111z', 'w0r1d_d43m0n'];
+  const servers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'w0r1d_d43m0n'];
   for (const i in servers) {
     const server = servers[i];
     const serverInfo = ns.getServer(server);
