@@ -182,8 +182,9 @@ const playCutWires = async (ns) => {
 
   const wireColors = Array.from(doc.querySelectorAll('div > p'))
     .filter((n) => n.innerText.match(/^\|/))
-    .map((n) => n.getAttribute('style').match(/: ([redylowbuhitg]+)/)[1])
-    .map((c) => (c === 'rgb' ? 'yellow' : c));
+    .map((n) => n.getAttribute('style').match(/: (.+);/)[1])
+    .map((c) => (contains(c, 'rgb(255, 193, 7)') ? 'yellow' : c))
+    .map((c) => (contains(c, 'rgb(102, 207, 188)') ? 'gray' : c));
 
   const wireProperties = [];
   for (let j = 0; j < wireCount; j++) {
