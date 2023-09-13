@@ -152,7 +152,7 @@ const waitForResources = async (ns: NS, dynamicWaitTime: number, reason = 'Resou
 
   ns.print(`${reason}; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
   ns.print(
-    `   --| Income: ${CYAN}${income}${RESET} /min  Home: ${homeRam}GB  Botnet: ${botRam}GB x${serverCount}  K:${karma}  T-${hoursTillEscape} |--`,
+    `   --| Income: ${CYAN}${income}${RESET} /min  H: ${homeRam}GB  Net: ${botRam}GB x${serverCount}  K:${karma}  T-${hoursTillEscape} |--`,
   );
 
   currentExp = player.exp.hacking;

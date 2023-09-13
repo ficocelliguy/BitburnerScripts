@@ -43,7 +43,7 @@ export async function main(ns: NS) {
     const server = servers[i];
     const serverInfo = ns.getServer(server);
     ns.tprint(
-      `${server} (${serverInfo.requiredHackingSkill}) Admin: ${serverInfo.hasAdminRights ? '✓' : 'NO'} Backdoor: ${
+      ` (${serverInfo.requiredHackingSkill}) ${server} Admin: ${serverInfo.hasAdminRights ? '✓' : 'NO'} Backdoor: ${
         serverInfo.backdoorInstalled ? '✓' : 'NO'
       }`,
     );

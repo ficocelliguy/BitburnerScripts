@@ -1,8 +1,13 @@
-/** @param {NS} ns */
-export async function main(ns) {
-  const script = ns.args[0] || '';
-  const target = ns.args[1] || '';
-  const scriptSize = ns.getScriptRam(script);
+import { AutocompleteData, NS } from '@ns';
+
+export function autocomplete(data: AutocompleteData) {
+  return [...data.scripts, '--tail'];
+}
+
+export async function main(ns: NS) {
+  const script = `${ns.args[0]}`;
+  const target = `${ns.args[1]}`;
+  const scriptSize = ns.getScriptRam(`${script}`);
 
   if (!scriptSize) {
     throw new Error('Script ' + script + ' not found');
@@ -16,8 +21,7 @@ export async function main(ns) {
   }
 }
 
-/** @param {NS} ns */
-const getServers = (ns) => {
+const getServers = (ns: NS) => {
   const dynamicServers = ns.scan('home');
   const hosts = [
     'n00dles',
@@ -94,8 +98,7 @@ const getServers = (ns) => {
   return dynamicServers.concat(hosts.filter((server) => dynamicServers.indexOf(server) === -1));
 };
 
-/** @param {NS} ns */
-const getAvailableRamOnServers = (ns) => {
+const getAvailableRamOnServers = (ns: NS) => {
   const servers = getServers(ns);
   return servers
     .filter((server) => ns.getServer(server).hasAdminRights)
@@ -109,8 +112,7 @@ const getAvailableRamOnServers = (ns) => {
     });
 };
 
-/** @param {NS} ns */
-const deployDistributedThreads = (ns, scriptName, target) => {
+const deployDistributedThreads = (ns: NS, scriptName: string, target: string) => {
   const scriptSize = ns.getScriptRam(scriptName);
 
   const availableNodes = getAvailableRamOnServers(ns);

@@ -40,8 +40,8 @@ export async function main(ns: NS) {
 
   ns.run('exec.js', 1, 'charge.js');
 
-  //ns.run(INFILTRATE_SCRIPT, 1, 4, 'Slum Snakes');
-  ns.run(INFILTRATE_SCRIPT, 1, 3);
+  ns.run(INFILTRATE_SCRIPT, 1, 4, 'Slum Snakes');
+  // ns.run(INFILTRATE_SCRIPT, 1, 3);
 
   while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
     await ns.sleep(1000);

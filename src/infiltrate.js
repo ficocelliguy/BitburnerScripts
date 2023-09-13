@@ -74,7 +74,7 @@ export async function main(ns) {
   for (const index in targets) {
     const targetFaction = targets[index];
     for (let i = 0; i < runs; i++) {
-      ns.print(`Infiltrating ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length}) ...`);
+      ns.print(`Infiltrating ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length})`);
       await startInfiltration(ns);
       await playMinigame(ns, targetFaction);
 

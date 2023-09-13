@@ -81,7 +81,7 @@ const augmentsToInstall = [
   'The Black Hand', // black hand
   'DataJack', // bitrunners
   "The Shadow's Simulacrum", // syndicate (phys 200, Aevum)
-  'Neuregen Gene Modification',
+  'Neuregen Gene Modification', /// Chong
   'Neural-Retention Enhancement',
   'CRTX42-AA Gene Modification',
   'Power Recirculation Core',
@@ -90,7 +90,7 @@ const augmentsToInstall = [
   'Neurotrainer II',
   'Social Negotiation Assistant (S.N.A)',
   'Nuoptimal Nootropic Injector Implant',
-  'Neuroreceptor Management Implant',
+  'Neuroreceptor Management Implant', // Tian
   'ADR-V1 Pheromone Gene',
   'Speech Enhancement',
   'BitWire',
@@ -109,5 +109,9 @@ const specialAugments = [
   'SoA - Wisdom of Athena',
   'SoA - Trickery of Hermes',
   'SoA - Chaos of Dionysus',
+  'SoA - Hunt of Artemis',
+  'SoA - Flood of Poseidon',
+  'SoA - Beauty of Aphrodite',
+  'SoA - Might of Ares',
   'The Red Pill',
 ];
