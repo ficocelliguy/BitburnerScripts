@@ -1,8 +1,10 @@
 export async function main(ns) {
-  const fragment = ns.stanek.activeFragments().find((f) => f.limit === 1);
-  ns.print(fragment);
+  const fragments = ns.stanek.activeFragments().filter((f) => f.limit === 1);
+  ns.print(fragments);
 
   while (true) {
-    await ns.stanek.chargeFragment(fragment.x, fragment.y);
+    for (const fragment of fragments) {
+      await ns.stanek.chargeFragment(fragment.x, fragment.y);
+    }
   }
 }

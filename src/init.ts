@@ -27,7 +27,7 @@ export async function main(ns: NS) {
   ns.singularity.purchaseProgram('SQLInject.exe');
 
   while (ns.getServer('home').maxRam < 1024 && ns.singularity.upgradeHomeRam()) {
-    // ns.print("Upgraded ram!")
+    await ns.sleep(10);
   }
 
   ns.stock.purchaseWseAccount();
@@ -40,7 +40,8 @@ export async function main(ns: NS) {
 
   ns.run('exec.js', 1, 'charge.js');
 
-  ns.run(INFILTRATE_SCRIPT, 1, 4, 'Slum Snakes');
+  //ns.run(INFILTRATE_SCRIPT, 1, 4, 'Slum Snakes');
+  ns.run(INFILTRATE_SCRIPT, 1, 3);
 
   while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
     await ns.sleep(1000);

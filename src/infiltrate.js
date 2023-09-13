@@ -74,12 +74,12 @@ export async function main(ns) {
   for (const index in targets) {
     const targetFaction = targets[index];
     for (let i = 0; i < runs; i++) {
+      ns.print(`Infiltrating ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length}) ...`);
       await startInfiltration(ns);
       await playMinigame(ns, targetFaction);
 
       ns.resizeTail(420, 200);
       ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
-      ns.print(`Infiltrated ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length})`);
     }
   }
   if (playBeep) {

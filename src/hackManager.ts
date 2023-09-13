@@ -142,7 +142,7 @@ const waitForResources = async (ns: NS, dynamicWaitTime: number, reason = 'Resou
   const xpMult = player.mults.hacking_exp * ns.getBitNodeMultipliers().HackExpGain;
   const lvlMult = player.mults.hacking * ns.getBitNodeMultipliers().HackingLevelMultiplier;
   const xpNeeded = ns.formulas.skills.calculateExp(targetLvl, lvlMult);
-  const xpRemaining = xpNeeded / xpMult - player.exp.hacking;
+  const xpRemaining = (xpNeeded - player.exp.hacking) / xpMult;
 
   const gainedXp = player.exp.hacking - currentExp;
   const timeSinceLastCheck = Date.now() - expTime || 0.01;
