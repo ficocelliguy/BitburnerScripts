@@ -1,6 +1,6 @@
 import { NS } from '@ns';
 
-const NUMBER_OF_SLEEVES = 7;
+const NUMBER_OF_SLEEVES = 8;
 
 export async function main(ns: NS) {
   const factions = ns.getPlayer().factions;
@@ -44,13 +44,24 @@ export async function main(ns: NS) {
   ns.singularity.installAugmentations('init.js');
 }
 
+/*
+ * Bachman
+ * ecorp
+ * fulcrum
+ * nwo
+ * omnitech
+ * kuai
+ * covenant?
+ * illuminati?
+ */
+
 const augmentsToInstall = [
   "BigD's Big ... Brain", // unobtainable
   'QLink', // Illuminati, expensive
   'Unstable Circadian Modulator', // Speakers for the Dead: 300 phys, rotates stat bonus hourly?
   'Embedded Netburner Module', // bitrunners
   'Embedded Netburner Module Core Implant', // bitrunners
-  'Embedded Netburner Module Core V3 Upgrade', // ecorp, megacorp, fulcrum
+  'Embedded Netburner Module Core V3 Upgrade', // ecorp, fulcrum
   'PC Direct-Neural Interface', // ecorp, omni, blade, 4s : 75% faction rep gain
   'PC Direct-Neural Interface NeuroNet Injector', // Fulcrum: 400k rep, bd fulcrumassets
   'Embedded Netburner Module Direct Memory Access Upgrade', // Fulcrum

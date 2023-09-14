@@ -36,11 +36,18 @@ export async function main(ns: NS) {
   ns.run('humanResources.js');
   ns.run('hackManager.js');
   //ns.run('stocks.js');
-  //ns.run('buyServer.js');
+  ns.run('buyServer.js');
+  await ns.sleep(1000);
+
+  ns.run(INFILTRATE_SCRIPT, 2, 'nobeep');
+
+  while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
+    await ns.sleep(1000);
+  }
 
   ns.run('exec.js', 1, 'charge.js');
 
-  ns.run(INFILTRATE_SCRIPT, 1, 4, 'Slum Snakes');
+  ns.run(INFILTRATE_SCRIPT, 1, 2, 'Slum Snakes');
   // ns.run(INFILTRATE_SCRIPT, 1, 3);
 
   while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
@@ -49,7 +56,10 @@ export async function main(ns: NS) {
 
   await ns.sleep(30000);
   ns.run('backdoor.js');
+  ns.run('buyServer.js');
 
   await ns.sleep(120000);
   ns.run('backdoor.js');
+  ns.run('buyServer.js');
+  ns.run('hackManager.js');
 }

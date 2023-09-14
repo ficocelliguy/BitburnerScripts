@@ -1,6 +1,6 @@
 import { NS, AutocompleteData } from '@ns';
 
-const NUMBER_OF_SLEEVES = 7;
+const NUMBER_OF_SLEEVES = 8;
 const MIN_SLEEVE_SHOCK = 90;
 const MIN_SLEEVE_SYNC = 95;
 

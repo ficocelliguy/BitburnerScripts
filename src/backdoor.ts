@@ -1,12 +1,11 @@
 import { NS } from '@ns';
 
 export function autocomplete() {
-  return ['--tail'];
+  return ['--tail', 'destroy'];
 }
 
-/** @param {NS} ns */
 export async function main(ns: NS) {
-  const servers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'w0r1d_d43m0n'];
+  const servers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', `fulcrumassets`];
   for (const i in servers) {
     const server = servers[i];
     const serverInfo = ns.getServer(server);
@@ -39,8 +38,17 @@ export async function main(ns: NS) {
     ns.singularity.connect('home');
   }
 
-  for (const i in servers) {
-    const server = servers[i];
+  if (ns.args.find((a) => a === 'destroy')) {
+    await connect(ns, `w0r1d_d43m0n`);
+    try {
+      await ns.singularity.installBackdoor();
+    } catch (e) {}
+    ns.singularity.connect('home');
+  }
+
+  const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'w0r1d_d43m0n'];
+  for (const i in storyServers) {
+    const server = storyServers[i];
     const serverInfo = ns.getServer(server);
     ns.tprint(
       ` (${serverInfo.requiredHackingSkill}) ${server} Admin: ${serverInfo.hasAdminRights ? '✓' : 'NO'} Backdoor: ${
@@ -55,7 +63,6 @@ interface connectionTree {
   connections: connectionTree[];
 }
 
-/** @param {NS} ns */
 const updateTreeForNode = async (ns: NS, nodeName: string, tree: connectionTree, scannedNodes: string[]) => {
   const connections = getConnectedNodes(ns, nodeName, scannedNodes);
   for (const index in connections) {
@@ -71,11 +78,9 @@ const updateTreeForNode = async (ns: NS, nodeName: string, tree: connectionTree,
   }
 };
 
-/** @param {NS} ns */
 const getConnectedNodes = (ns: NS, nodeName: string, scannedNodes: string[]) =>
   ns.scan(nodeName).filter((node) => !~scannedNodes.indexOf(node));
 
-/** @param {NS} ns */
 const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth = 0) => {
   if (!nodeTree) {
     return;
@@ -99,7 +104,6 @@ const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth
   });
 };
 
-/** @param {NS} ns */
 const connect = async (ns: NS, target: string) => {
   const scannedNodes = ['home'];
   const tree: connectionTree = {
@@ -113,14 +117,6 @@ const connect = async (ns: NS, target: string) => {
   path.forEach((node) => ns.singularity.connect(node));
 };
 
-/**
- *
- * @param {NS} ns
- * @param target
- * @param nodeTree
- * @param connectionPath
- * @return string
- */
 const getConnectionPath: (ns: NS, target: string, nodeTree: connectionTree, connectionPath?: string[]) => string[] = (
   ns: NS,
   target: string,

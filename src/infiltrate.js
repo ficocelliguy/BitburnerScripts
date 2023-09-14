@@ -74,7 +74,16 @@ export async function main(ns) {
   for (const index in targets) {
     const targetFaction = targets[index];
     for (let i = 0; i < runs; i++) {
-      ns.print(`Infiltrating ${i + 1} / ${runs} for faction ${targetFaction} (${+index + 1}/${targets.length})`);
+      ns.print(
+        `Infiltrating ${i + 1} / ${runs} for faction ${targetFaction} ${
+          targets.length > 1 ? `(${+index + 1}/${targets.length})` : ''
+        }`,
+      );
+      const overviewTitle = doc.querySelector('[data-testid="EqualizerIcon"] ~ p');
+      overviewTitle &&
+        (overviewTitle.innerHTML = `${i + 1}/${runs} ${
+          targets.length > 1 ? `(${+index + 1}/${targets.length}) ` : ''
+        }${targetFaction.slice(0, targets.length > 1 ? 8 : 12)}`);
       await startInfiltration(ns);
       await playMinigame(ns, targetFaction);
 
@@ -82,6 +91,8 @@ export async function main(ns) {
       ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
     }
   }
+  const overviewTitle = doc.querySelector('[data-testid="EqualizerIcon"] ~ p');
+  overviewTitle && (overviewTitle.innerHTML = `Overview`);
   if (playBeep) {
     await beep();
     await ns.sleep(300);
@@ -178,7 +189,7 @@ const playCutWires = async (ns) => {
     .filter((text) => text.indexOf('Cut') !== -1)
     .map((text) => text.match(/[0-9]| yellow| red| blue| white/)[0].trim());
 
-  const wireCount = Array.from(doc.querySelectorAll('div > p')).filter((n) => n.innerText.match(/^[0-9]/)).length;
+  const wireCount = Array.from(doc.querySelectorAll('div > p')).filter((n) => n.innerText.match(/^[0-9]$/)).length;
 
   const wireColors = Array.from(doc.querySelectorAll('div > p'))
     .filter((n) => n.innerText.match(/^\|/))
