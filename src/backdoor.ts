@@ -1,11 +1,11 @@
 import { NS } from '@ns';
 
 export function autocomplete() {
-  return ['--tail', 'destroy'];
+  return ['--tail', 'destroy', 'fa'];
 }
 
 export async function main(ns: NS) {
-  const servers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', `fulcrumassets`];
+  const servers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z'];
   for (const i in servers) {
     const server = servers[i];
     const serverInfo = ns.getServer(server);
@@ -40,6 +40,14 @@ export async function main(ns: NS) {
 
   if (ns.args.find((a) => a === 'destroy')) {
     await connect(ns, `w0r1d_d43m0n`);
+    try {
+      await ns.singularity.installBackdoor();
+    } catch (e) {}
+    ns.singularity.connect('home');
+  }
+
+  if (ns.args.find((a) => a === 'fa')) {
+    await connect(ns, `fulcrumassets`);
     try {
       await ns.singularity.installBackdoor();
     } catch (e) {}
@@ -94,9 +102,9 @@ const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth
     (numOpenPortsRequired ?? 0) > (openPortCount ?? 0) ? `${openPortCount}/${numOpenPortsRequired}` : '✓';
   const root = hasAdminRights ? 'YES' : 'NO';
 
-  const infoString = `${'  '.repeat(depth)} ┣  ${
-    nodeTree.id
-  }    Hack: ${requiredHackingSkill}  Ports: ${portDetails}  Root: ${root}  RAM: ${maxRam}`;
+  const infoString = `${'  '.repeat(depth)} ┣  ${nodeTree.id}    Hack: ${Math.ceil(
+    requiredHackingSkill ?? 0,
+  )}  Ports: ${portDetails}  Root: ${root}  RAM: ${maxRam}`;
   ns.print(infoString);
   ns.write(fileName, `${infoString}\r\n`);
   nodeTree.connections.forEach((nodeSubTree) => {
