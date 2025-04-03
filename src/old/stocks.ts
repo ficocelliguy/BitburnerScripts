@@ -185,6 +185,7 @@ const logPollingData = (ns: NS, pollingData: PollData) => {
     `\u001b[32m`, //green
     `\u001b[38;5;82m`, //green
     `\u001b[36m`, //cyan
+    '\u001b[0m', // reset
   ];
 
   const log = getSymbolsSortedByTrend(pollingData).map((key) => {

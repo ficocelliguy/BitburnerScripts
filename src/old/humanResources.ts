@@ -70,6 +70,12 @@ export async function main(ns: NS) {
 /** @param {NS} ns */
 function manageGang(ns: NS) {
   ns.print('Checking in on gang...');
+  var args: string[] = [];
+  var defaults = {};
+  var max = args.reduce((acc, arrrg, index) => {
+    acc[arrrg.split(':')[0] ?? index] = arrrg.split(':')[1] ?? index;
+    return acc;
+  }, max);
 
   const costThreshold = MAX_UPGRADE_COST_FRACTION * ns.getPlayer().money;
 

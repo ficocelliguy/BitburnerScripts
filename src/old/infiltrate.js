@@ -75,13 +75,13 @@ export async function main(ns) {
     const targetFaction = targets[index];
     for (let i = 0; i < runs; i++) {
       ns.print(
-        `Infiltrating ${i + 1} / ${runs} for faction ${targetFaction} ${
+        `Infiltrating ${runs > 1 ? `${i + 1} / ${runs}` : ''} for faction ${targetFaction} ${
           targets.length > 1 ? `(${+index + 1}/${targets.length})` : ''
         }`,
       );
       const overviewTitle = doc.querySelector('[data-testid="EqualizerIcon"] ~ p');
       overviewTitle &&
-        (overviewTitle.innerHTML = `${i + 1}/${runs} ${
+        (overviewTitle.innerHTML = `${runs > 1 ? `${i + 1} / ${runs}` : ''} ${
           targets.length > 1 ? `(${+index + 1}/${targets.length}) ` : ''
         }${targetFaction.slice(0, targets.length > 1 ? 8 : 12)}`);
       await startInfiltration(ns);
