@@ -22,11 +22,7 @@ export default class BaseServer {
 
 /** @param {NS} ns */
 export async function main(ns) {
-  /**
-   * @param ns : NS
-   * @param server : BaseServer
-   */
-  function getserver(ns, server) {
-    server.id;
-  }
+  const r1 = await ns.dnet.authenticate('darkweb', 'leekspin');
+  const r2 = await ns.dnet.connectToSession('darkweb', 'leekspin');
+  console.log(r1, r2);
 }

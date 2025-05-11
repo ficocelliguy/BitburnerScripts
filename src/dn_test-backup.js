@@ -16,7 +16,7 @@ export async function main(ns) {
       //   continue;
       // }
       const auth = await serverSolver(ns, server);
-      if (auth) {
+      if (auth !== false) {
         const details = ns.dnet.getServerAuthDetails(server);
         if (!details.isConnected || !details.isOnline) {
           continue;
@@ -25,7 +25,6 @@ export async function main(ns) {
           ns.scp(ns.getScriptName(), server, ns.getRunningScript().server);
         } catch (e) {
           debugger;
-          continue;
         }
         ns.scp('dn_clear.js', server, ns.getRunningScript().server);
         ns.scp('dn_cache.js', server, ns.getRunningScript().server);
@@ -34,10 +33,7 @@ export async function main(ns) {
         ns.exec('dn_clear.js', server, { preventDuplicates: true, temporary: true });
       }
     }
-    for (let i = 0; i < 1000; i++) {
-      await ns.sleep(10);
-      ns.exec('dn_cache.js', ns.getRunningScript().server, { preventDuplicates: true, temporary: true });
-    }
+    await ns.sleep(10000);
   }
 }
 
@@ -157,7 +153,7 @@ export const romanNumeralSolver = async (ns, server, response) => {
 };
 
 export const convertToBase10Solver = async (ns, server, response) => {
-  const [base, number] = response.data?.split(',') || [];
+  const [base, number] = response.data.split(',');
   const password = parseBaseNNumberString(number, base);
   const result = await ns.dnet.authenticate(server, password.toString());
   return result.success ? password : false;
@@ -224,7 +220,7 @@ export const yesn_tSolver = async (ns, server, details) => {
     if (!log.data) {
       return false;
     }
-    log.data?.split(',')?.forEach((yes, i) => {
+    log.data.split(',')?.forEach((yes, i) => {
       if (yes !== 'yes') {
         password[i] += 1;
       }
