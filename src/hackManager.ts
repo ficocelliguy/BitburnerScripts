@@ -1,4 +1,5 @@
 import { NS } from '@ns';
+import { getServers } from '@/exec';
 
 const WEAKEN_SCRIPT = 'weaken.js';
 const GROW_SCRIPT = 'grow.js';
@@ -33,9 +34,9 @@ export async function main(ns: NS) {
   }
 
   disableLogging(ns);
-  ns.tail();
-  ns.resizeTail(820, 120);
-  ns.moveTail(300, 30);
+  ns.ui.openTail();
+  ns.ui.resizeTail(820, 120);
+  ns.ui.moveTail(300, 30);
 
   const potentialTargets = getTargetlist(ns);
   ns.print(potentialTargets.slice(0, MAX_TARGETS));
@@ -130,15 +131,15 @@ export async function main(ns: NS) {
 }
 
 const waitForResources = async (ns: NS, dynamicWaitTime: number, reason = 'Resources maxed') => {
-  const homeRam = ns.formatNumber(ns.getServerMaxRam('home'), 0, 100000000);
-  const botRam = ns.formatNumber(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
+  const homeRam = ns.format.number(ns.getServerMaxRam('home'), 0, 100000000);
+  const botRam = ns.format.number(getMaxRam(ns, false) - ns.getServerMaxRam('home'), 0, 100000000);
   const serverCount = getAvailableRamOnServers(ns).length;
-  const income = ns.formatNumber(ns.getTotalScriptIncome()[0] * 60, 1);
+  const income = ns.format.number(ns.getTotalScriptIncome()[0] * 60, 1);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const karma = ns.formatNumber(Math.floor(ns.heart.break()), 1);
+  const karma = ns.format.number(Math.floor(ns.heart.break()), 1);
   const player = ns.getPlayer();
-  const targetLvl = ns.getServer('w0r1d_d43m0n')?.requiredHackingSkill ?? 0;
+  const targetLvl = ns.getBitNodeMultipliers().WorldDaemonDifficulty * 3000;
   const xpMult = player.mults.hacking_exp * ns.getBitNodeMultipliers().HackExpGain;
   const lvlMult = player.mults.hacking * ns.getBitNodeMultipliers().HackingLevelMultiplier;
   const xpNeeded = ns.formulas.skills.calculateExp(targetLvl, lvlMult);
@@ -148,7 +149,7 @@ const waitForResources = async (ns: NS, dynamicWaitTime: number, reason = 'Resou
   const timeSinceLastCheck = Date.now() - expTime || 0.01;
   const xpPerSec = Math.max((gainedXp / timeSinceLastCheck) * 1000, ns.getTotalScriptExpGain());
 
-  const hoursTillEscape = ns.formatNumber(xpRemaining / (xpPerSec * 60 * 60), 2);
+  const hoursTillEscape = ns.format.number(xpRemaining / (xpPerSec * 60 * 60), 2);
 
   ns.print(`${reason}; Sleeping for ${(dynamicWaitTime / (1000 * 60)).toFixed(2)} minutes.`);
   ns.print(
@@ -196,7 +197,7 @@ const launchAttack = async (ns: NS, target: string) => {
 
   const attackCount = Math.min(Math.floor(ram / unitSize), 1);
 
-  const threadCount = ns.formatNumber(
+  const threadCount = ns.format.number(
     attackCount *
       unitCount *
       (hThreadsPerUnit + weakenAfterGrowThreadsPerUnit + weakenAfterGrowThreadsPerUnit + gThreadsPerUnit),
@@ -204,7 +205,7 @@ const launchAttack = async (ns: NS, target: string) => {
     10000000,
   );
   ns.print(
-    `  !! ${CYAN}${target}${RESET} has ${GREEN}$${ns.formatNumber(currentMoney)}${RESET} ${
+    `  !! ${CYAN}${target}${RESET} has ${GREEN}$${ns.format.number(currentMoney)}${RESET} ${
       moneyPercent < 0.99 ? (100 * moneyPercent).toFixed(1) + '%' : ''
     }; ${RED}Launching attack${RESET} with ${threadCount} threads... (${Math.floor(
       attackCount * unitCount * unitSize,
@@ -260,7 +261,7 @@ const growTargetToMax = (ns: NS, target: string, priorThreads = 0) => {
   const remainingThreads = Math.ceil(Math.max(gThreads - priorThreads, 0));
   if (remainingThreads) {
     ns.print(
-      `${target} grow required, currently ${Math.round((currentMoney / maxMoney) * 100)}% of $${ns.formatNumber(
+      `${target} grow required, currently ${Math.round((currentMoney / maxMoney) * 100)}% of $${ns.format.number(
         maxMoney,
       )} : ${remainingThreads} threads needed`,
     );
@@ -269,84 +270,6 @@ const growTargetToMax = (ns: NS, target: string, priorThreads = 0) => {
   const threadsRemaining = deployDistributedThreads(ns, GROW_SCRIPT, target, remainingThreads);
   !threadsRemaining && deployDistributedThreads(ns, WEAKEN_SCRIPT, target, Math.floor(remainingThreads / 125));
   return threadsRemaining;
-};
-
-const getServers = (ns: NS) => {
-  const dynamicServers = ns.scan('home');
-  const hosts = [
-    'n00dles',
-    'foodnstuff',
-    'sigma-cosmetics',
-    'joesguns',
-    'zer0',
-    'hong-fang-tea',
-    'nectar-net',
-    'silver-helix',
-    'the-hub',
-    'computek',
-    'netlink',
-    'rothman-uni',
-    'avmnite-02h',
-    'syscore',
-    'aevum-police',
-    'global-pharm',
-    'deltaone',
-    'univ-energy',
-    'taiyang-digital',
-    'microdyne',
-    'fulcrumtech',
-    'millenium-fitness',
-    'galactic-cyber',
-    'snap-fitness',
-    'unitalife',
-    'defcomm',
-    'infocomm',
-    'applied-energetics',
-    'stormtech',
-    'kuai-gong',
-    '.',
-    'blade',
-    'powerhouse-fitness',
-    'megacorp',
-    'vitalife',
-    '4sigma',
-    'b-and-a',
-    'nwo',
-    'catalyst',
-    'rho-construction',
-    'phantasy',
-    'crush-fitness',
-    'summit-uni',
-    'omega-net',
-    'harakiri-sushi',
-    'max-hardware',
-    'CSEC',
-    'neo-net',
-    'johnson-ortho',
-    'zb-institute',
-    'I.I.I.I',
-    'lexo-corp',
-    'aerocorp',
-    'omnia',
-    'icarus',
-    'solaris',
-    'zb-def',
-    'zeus-med',
-    'nova-med',
-    'titan-labs',
-    'helios',
-    'omnitek',
-    'clarkinc',
-    'ecorp',
-    'fulcrumassets',
-    'The-Cave',
-    'run4theh111z',
-    'alpha-ent',
-    'iron-gym',
-    'w0r1d_d43m0n',
-    'home',
-  ];
-  return dynamicServers.concat(hosts.filter((server) => dynamicServers.indexOf(server) === -1));
 };
 
 const getAvailableRamOnServers = (ns: NS) => {
@@ -412,7 +335,15 @@ const deployDistributedThreads = (
     }
 
     ns.scp(scriptName, node.id);
-    ns.exec(scriptName, node.id, maxThreads, target, offset, repeat, `Threads: ${maxThreads}`);
+    ns.exec(
+      scriptName,
+      node.id,
+      { threads: maxThreads, temporary: true },
+      target,
+      offset,
+      repeat,
+      `Threads: ${maxThreads}`,
+    );
     threadsRemaining -= maxThreads;
   });
 

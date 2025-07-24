@@ -1,5 +1,6 @@
 /** @param {NS} ns */
 export async function main(ns) {
+  ns.disableLog('ALL');
   const targetNode = ns.args[0] || '';
   const delay = ns.args[1] || 0;
   const repeat = ns.args[2] || 1;
@@ -40,7 +41,7 @@ function recursivelyFindAllServers(currentServer) {
   // # TODO: call this function (recursivelyFindAllServers) for each of the new servers you found
 }
 
-debugger;
+// debugger;
 
 function removeDuplicateServers(serverArray) {
   let results = [];

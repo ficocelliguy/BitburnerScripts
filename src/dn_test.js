@@ -6,47 +6,89 @@ export async function main(ns) {
   // if (existingScript) {
   //   return 0;
   // }
-  ns.toast(`Authenticated to ${ns.getRunningScript().server}`);
+  const serverName = ns.getHostname();
+  //ns.toast(`Authenticated to ${serverName}`);
 
   while (true) {
     const nearbyServers = ns.dnet.probe();
     for (const server of nearbyServers) {
-      //const serverDetails = ns.dnet.getServer(server);
-      // if (serverDetails.hasAdminRights) {
+      const existingPassword = getExistingPassword(ns, server);
+      let details = ns.dnet.getServerAuthDetails(server);
+      if (!details || !details.isConnectedToCurrentServer || !details.isOnline) {
+        ns.print(`Skipping ${server} - not connected or offline`);
+        continue;
+      }
+
+      // const runningScript = ns.ps(server).find((script) => script.filename === ns.getScriptName());
+      // if (runningScript) {
+      //   ns.print(`Already running on ${server}`);
       //   continue;
       // }
-      const auth = await serverSolver(ns, server);
-      if (auth) {
-        const details = ns.dnet.getServerAuthDetails(server);
-        if (!details.isConnected || !details.isOnline) {
+
+      let success = (await authWrapper(ns, server, existingPassword || '')).success;
+
+      if (!success) {
+        success = await serverSolver(ns, server);
+      }
+
+      if (success) {
+        details = ns.dnet.getServerAuthDetails(server);
+        if (!details.isConnectedToCurrentServer || !details.isOnline) {
           continue;
         }
         try {
-          ns.scp(ns.getScriptName(), server, ns.getRunningScript().server);
+          ns.scp(ns.getScriptName(), server, serverName);
         } catch (e) {
           debugger;
           continue;
         }
-        ns.scp('dn_clear.js', server, ns.getRunningScript().server);
-        ns.scp('dn_cache.js', server, ns.getRunningScript().server);
-        ns.scp('dn_phish.js', server, ns.getRunningScript().server);
+        ns.scp('dn_clear.js', server, serverName);
+        ns.scp('dn_cache.js', server, serverName);
+        ns.scp('dn_phish.js', server, serverName);
         ns.exec(ns.getScriptName(), server, { preventDuplicates: true, temporary: true });
         ns.exec('dn_clear.js', server, { preventDuplicates: true, temporary: true });
       }
     }
-    for (let i = 0; i < 1000; i++) {
-      await ns.sleep(10);
-      ns.exec('dn_cache.js', ns.getRunningScript().server, { preventDuplicates: true, temporary: true });
-    }
+    await ns.sleep(10000);
   }
 }
+
+const authWrapper = async (ns, server, password) => {
+  const result = await ns.dnet.authenticate(server, password);
+  if (result.success) {
+    savePassword(ns, server, password);
+  }
+  return result;
+};
+
+const getPasswordFileName = (hostname) => {
+  const excludedChars = ['/', '*', '?', '[', ']', '!', '\\', '~', '|', '#', '"', "'"];
+  let cleanedHostname = hostname;
+  for (const char of excludedChars) {
+    cleanedHostname = cleanedHostname.replace(new RegExp(`\\${char}`, 'g'), '-');
+  }
+  return `pw/${cleanedHostname}.txt`;
+};
+
+const getExistingPassword = (ns, hostname) => {
+  const currentHostname = ns.getHostname();
+  const filename = getPasswordFileName(hostname);
+  ns.scp(filename, currentHostname, 'darkweb');
+  return ns.read(filename);
+};
+
+const savePassword = (ns, hostname, password) => {
+  const filename = getPasswordFileName(hostname);
+  ns.write(filename, password, 'w');
+  ns.scp(filename, 'darkweb');
+};
 
 /** @param {NS} ns
  * @param {string} server
  */
 export const serverSolver = async (ns, server) => {
   const details = ns.dnet.getServerAuthDetails(server);
-  if (!details.isConnected || !details.isOnline) {
+  if (!details.isConnectedToCurrentServer || !details.isOnline) {
     return false;
   }
 
@@ -57,12 +99,15 @@ export const serverSolver = async (ns, server) => {
       return sortedEchoVulnSolver(ns, server, details);
     case undefined:
     case Minigames.NoPassword:
-      return (await ns.dnet.authenticate(server, '')).success;
+      return (await authWrapper(ns, server, '')).success;
     case Minigames.DefaultPassword:
       return defaultPasswordSolver(ns, server);
     case Minigames.MastermindHint:
       await mastermindSolver(ns, server, details);
       break;
+    case Minigames.Captcha:
+      await captchaSolver(ns, server, details);
+      return false;
     // case Minigames.TimingAttack:
     //   await timingAttackSolver(ns, server, response);
     //   break;
@@ -100,8 +145,48 @@ export const serverSolver = async (ns, server) => {
     //   await parsedExpressionSolver(ns, server, response);
     //   break;
     default:
-      ns.tprint(`Unrecognized modelId: ${details.modelId}`);
+      return sniff(ns, server);
+  }
+};
+
+const sniff = async (ns, server) => {
+  ns.print(`Attempting to sniff packets from ${server}`);
+  const match = getPasswordFormatMatchRegex(ns, server);
+
+  while (true) {
+    const results = await ns.dnet.packetCapture(server);
+    if (!results.success) {
+      ns.print(`Failed to capture packets from ${server}: ${results.message}`);
       return false;
+    }
+    const matches = results.data.match(match);
+
+    for (const match of matches || []) {
+      const response = await authWrapper(ns, server, match);
+      if (response.success) {
+        ns.print(`Successfully authenticated to ${server} with password: ${match}`);
+        return true;
+      } else {
+        ns.print(`Failed to authenticate to ${server} with password: ${match}`);
+      }
+    }
+
+    await ns.sleep(10);
+  }
+};
+
+const getPasswordFormatMatchRegex = (ns, server) => {
+  const passwordFormat = ns.dnet.getServerAuthDetails(server).passwordFormat;
+  const passwordLength = ns.dnet.getServerAuthDetails(server).passwordLength;
+
+  if (passwordFormat === 'numeric') {
+    return new RegExp(`\\d{${passwordLength}}`, 'g');
+  }
+  if (passwordFormat === 'alphabetic') {
+    return new RegExp(`[a-zA-Z]{${passwordLength}}`, 'g');
+  }
+  if (passwordFormat === 'alphanumeric') {
+    return new RegExp(`[a-zA-Z0-9]{${passwordLength}}`, 'g');
   }
 };
 
@@ -109,14 +194,28 @@ const getServerLogs = async (ns, server) => {
   const result = await ns.dnet.heartbleed(server, { peek: true });
   if (!result.success) {
     ns.tprint(`Failed to get logs for ${server}`);
-    return { data: '', passwordHint: '' };
+    return { data: '', passwordHint: '', success: result.success };
   }
   const resultString = result.logs.find((log) => log.includes('passwordAttempted'));
   if (resultString) {
     return JSON.parse(resultString);
   }
   console.log('No logs found');
-  return { data: '', passwordHint: '' };
+  return { data: '', passwordHint: '', success: result.success };
+};
+
+export const captchaSolver = async (ns, server, details) => {
+  const captcha = details.data;
+  if (!captcha) {
+    return false;
+  }
+  const cleanedNumbers = captcha.replace(/[^0-9]/g, '');
+  const response = await authWrapper(ns, server, cleanedNumbers);
+  if (response.success) {
+    return true;
+  }
+  ns.tprint(`Captcha solve failed: ${response.message}`);
+  return false;
 };
 
 export const echoVulnSolver = async (ns, server, response) => {
@@ -126,7 +225,7 @@ export const echoVulnSolver = async (ns, server, response) => {
     password = password.replace(n, '');
   }
   password = password.trim();
-  const result = await ns.dnet.authenticate(server, password);
+  const result = await authWrapper(ns, server, password);
   const sanityCheck = await ns.dnet.connectToSession(server, password);
   return result.success ? password : false;
 };
@@ -134,7 +233,7 @@ export const echoVulnSolver = async (ns, server, response) => {
 const tryAllPermutations = async (ns, server, data) => {
   const options = generateAllPermutationsOfString(data);
   for (const option of options) {
-    const result = await ns.dnet.authenticate(server, option);
+    const result = await authWrapper(ns, server, option);
     if (result.success) {
       return option;
     }
@@ -152,21 +251,21 @@ export const sortedEchoVulnSolver = async (ns, server, response) => {
 
 export const romanNumeralSolver = async (ns, server, response) => {
   const password = parseRomanNumeral(response.data);
-  const result = await ns.dnet.authenticate(server, password.toString());
+  const result = await authWrapper(ns, server, password.toString());
   return result.success ? password : false;
 };
 
 export const convertToBase10Solver = async (ns, server, response) => {
   const [base, number] = response.data?.split(',') || [];
   const password = parseBaseNNumberString(number, base);
-  const result = await ns.dnet.authenticate(server, password.toString());
+  const result = await authWrapper(ns, server, password.toString());
   return result.success ? password : false;
 };
 
 export const defaultPasswordSolver = async (ns, server) => {
   const defaultSettingsDictionary = ['admin', 'password', '0000', '12345'];
   for (const password of defaultSettingsDictionary) {
-    const result = await ns.dnet.authenticate(server, password);
+    const result = await authWrapper(ns, server, password);
     if (result.success) {
       return password;
     }
@@ -177,7 +276,7 @@ export const defaultPasswordSolver = async (ns, server) => {
 export const dogNamesSolver = async (ns, server) => {
   const dogNameDictionary = ['fido', 'spot', 'rover', 'max'];
   for (const dogName of dogNameDictionary) {
-    const result = await ns.dnet.authenticate(server, dogName);
+    const result = await authWrapper(ns, server, dogName);
     if (result.success) {
       return dogName;
     }
@@ -190,8 +289,12 @@ export const spiceLevelSolver = async (ns, server, details) => {
   const numbersInPassword = new Array(10).fill(0);
   for (let i = 0; i < 10; i++) {
     const passwordToAttempt = new Array(passwordLength).fill(i);
-    await ns.dnet.authenticate(server, passwordToAttempt.join(''));
+    await authWrapper(ns, server, passwordToAttempt.join(''));
     const result = await getServerLogs(ns, server);
+    if (!result.success) {
+      ns.print(`Failed to get logs for ${server}: ${result.message}`);
+      return false;
+    }
     numbersInPassword[i] = result.data?.split('').filter((char) => char && char !== '0').length;
   }
   const sortedPassword = numbersInPassword.map((n, i) => new Array(n).fill(i)).join('');
@@ -203,8 +306,12 @@ export const mastermindSolver = async (ns, server, details) => {
   const numbersInPassword = new Array(10).fill(0);
   for (let i = 0; i < 10; i++) {
     const passwordToAttempt = new Array(passwordLength).fill(i);
-    await ns.dnet.authenticate(server, passwordToAttempt.join(''));
+    await authWrapper(ns, server, passwordToAttempt.join(''));
     const result = await getServerLogs(ns, server);
+    if (!result.success) {
+      ns.print(`Failed to get logs for ${server}: ${result.message}`);
+      return false;
+    }
     numbersInPassword[i] = +result.data?.split(',')[0] || 0;
   }
   const sortedPassword = numbersInPassword
@@ -216,19 +323,28 @@ export const mastermindSolver = async (ns, server, details) => {
 
 export const yesn_tSolver = async (ns, server, details) => {
   const passwordLength = details.passwordLength;
-  let password = new Array(passwordLength).fill(0);
+  let password = new Array(passwordLength).fill(0).map(() => 0);
   let response;
   do {
-    response = await ns.dnet.authenticate(server, password.join(''));
+    response = await authWrapper(ns, server, password.join(''));
     const log = await getServerLogs(ns, server);
-    if (!log.data) {
+    if (!log.success) {
+      ns.print(`Failed to get logs for ${server}: ${log.message}`);
       return false;
     }
-    log.data?.split(',')?.forEach((yes, i) => {
-      if (yes !== 'yes') {
-        password[i] += 1;
-      }
-    });
+    if (!log.data) {
+      await ns.sleep(1000);
+      continue;
+    }
+    log.data
+      ?.split(',')
+      ?.slice(0, passwordLength)
+      .forEach((yes, i) => {
+        if (yes !== 'yes') {
+          password[i] = password[i] || 0;
+          password[i] += 1;
+        }
+      });
   } while (!response?.success);
   return true;
 };
@@ -241,6 +357,7 @@ const Minigames = {
   SortedEchoVuln: 'PHP 5.4',
   NoPassword: 'ZeroLogon',
   DefaultPassword: 'FreshInstall_1.0',
+  Captcha: 'CloudBlare(tm)',
   MastermindHint: 'DeepGreen',
   TimingAttack: '2G_cellular',
   LargestPrimeFactor: 'PrimeTime 2',

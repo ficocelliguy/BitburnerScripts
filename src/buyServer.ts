@@ -6,7 +6,7 @@ export async function main(ns: NS) {
     const maxServerExponent = getMaximumServerAffordable(ns);
     const maxServerSize = 2 ** maxServerExponent;
 
-    ns.print('Size: 2**', maxServerExponent, ', cost: ', ns.formatNumber(ns.getPurchasedServerCost(maxServerSize)));
+    ns.print('Size: 2**', maxServerExponent, ', cost: ', ns.format.number(ns.getPurchasedServerCost(maxServerSize)));
     ns.purchaseServer('BigBoi-' + maxServerExponent, maxServerSize);
     await ns.sleep(10);
   }

@@ -19,7 +19,8 @@ async function playRoulette(ns) {
 
     Date.prototype.getTime = ORIGINAL_GET_TIME;
 
-    await setElementValue(doc.querySelector('input[type="number"]'), 10_000_000);
+    const bet = Math.min(10_000_000, ns.getServer('home').moneyAvailable);
+    await setElementValue(doc.querySelector('input[type="number"]'), bet);
     await ns.sleep(100);
 
     const zeroButton = findElementWithText('button', '0', true);

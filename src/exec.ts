@@ -21,8 +21,8 @@ export async function main(ns: NS) {
   }
 }
 
-const getServers = (ns: NS) => {
-  const dynamicServers = ns.scan('home');
+export const getServers = (ns: NS) => {
+  const dynamicServers = ns.scan('home').filter((server) => server !== 'darkweb');
   const hosts = [
     'n00dles',
     'foodnstuff',

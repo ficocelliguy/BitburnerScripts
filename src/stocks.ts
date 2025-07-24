@@ -67,10 +67,10 @@ export const pollDance = async (ns: NS) => {
     const portfolioGains = getPortfolioProfit(ns);
     const gains = portfolio + portfolioGains + sales - investedFunds;
     ns.print(
-      ` C:${counter}  Profit: ${ns.formatNumber(
+      ` C:${counter}  Profit: ${ns.format.number(
         investedFunds ? (gains * 100) / investedFunds : 0,
         1,
-      )}%  Net: ${ns.formatNumber(gains, 1)}  Portfolio: ${ns.formatNumber(portfolio, 1)}`,
+      )}%  Net: ${ns.format.number(gains, 1)}  Portfolio: ${ns.format.number(portfolio, 1)}`,
     );
 
     await ns.sleep(POLL_RATE);
@@ -203,13 +203,13 @@ const logPollingData = (ns: NS, pollingData: PollData) => {
     const profit = bidPrice - buyPrice;
     const percentProfit = profit / buyPrice || 0;
     const profitColor = colors[Math.min(colors.length - 1, Math.max(0, Math.floor(percentProfit / 0.01 + 3.5)))];
-    const formattedProfit = `${profitColor}${ns.formatNumber(percentProfit * 100, 1)}${reset}`;
+    const formattedProfit = `${profitColor}${ns.format.number(percentProfit * 100, 1)}${reset}`;
     const ownedStockStatus = stocksOwned
-      ? `${formattedProfit}%  ${ns.formatNumber(profit * stocksOwned, 1, 1000)}  ${ns.formatNumber(
+      ? `${formattedProfit}%  ${ns.format.number(profit * stocksOwned, 1, 1000)}  ${ns.format.number(
           buyPrice,
           1,
           1000,
-        )}  ${ns.formatNumber(bidPrice, 1, 1000)}$ `
+        )}  ${ns.format.number(bidPrice, 1, 1000)}$ `
       : '';
 
     return `${key}:${leadingSpacer}${color}${formattedTrend}%${reset}${trailingSpacer}/min   ${ownedStockStatus}`;

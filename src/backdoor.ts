@@ -57,10 +57,13 @@ export async function main(ns: NS) {
   const storyServers = ['CSEC', 'avmnite-02h', 'I.I.I.I', 'run4theh111z', 'w0r1d_d43m0n'];
   for (const i in storyServers) {
     const server = storyServers[i];
-    const serverInfo = ns.getServer(server);
+    let serverInfo;
+    try {
+      serverInfo = ns.getServer(server);
+    } catch (e) {}
     ns.tprint(
-      ` (${serverInfo.requiredHackingSkill}) ${server} Admin: ${serverInfo.hasAdminRights ? '✓' : 'NO'} Backdoor: ${
-        serverInfo.backdoorInstalled ? '✓' : 'NO'
+      ` (${serverInfo?.requiredHackingSkill}) ${server} Admin: ${serverInfo?.hasAdminRights ? '✓' : 'NO'} Backdoor: ${
+        serverInfo?.backdoorInstalled ? '✓' : 'NO'
       }`,
     );
   }

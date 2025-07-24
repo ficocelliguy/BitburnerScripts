@@ -12,11 +12,11 @@ export async function main(ns: NS) {
 
   ns.singularity.commitCrime(ns.enums.CrimeType.homicide, false);
 
-  ns.run(INFILTRATE_SCRIPT, 1, 'nobeep');
+  //ns.run(INFILTRATE_SCRIPT, 1, 'nobeep');
 
-  while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
-    await ns.sleep(1000);
-  }
+  // while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
+  //   await ns.sleep(1000);
+  // }
 
   ns.singularity.travelToCity(ns.enums.CityName.Aevum);
   ns.singularity.purchaseTor();
@@ -36,23 +36,24 @@ export async function main(ns: NS) {
   ns.run('humanResources.js');
   ns.run('hackManager.js');
   //ns.run('stocks.js');
+  ns.run('deploy.js');
   ns.run('buyServer.js');
   await ns.sleep(1000);
 
-  ns.run(INFILTRATE_SCRIPT, 2, 'nobeep');
-
-  while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
-    await ns.sleep(1000);
-  }
+  // ns.run(INFILTRATE_SCRIPT, 2, 'nobeep');
+  //
+  // while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
+  //   await ns.sleep(1000);
+  // }
 
   ns.run('exec.js', 1, 'charge.js');
 
-  ns.run(INFILTRATE_SCRIPT, 1, 2, 'Slum Snakes');
-  // ns.run(INFILTRATE_SCRIPT, 1, 3);
-
-  while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
-    await ns.sleep(1000);
-  }
+  // ns.run(INFILTRATE_SCRIPT, 1, 2, 'Slum Snakes');
+  // // ns.run(INFILTRATE_SCRIPT, 1, 3);
+  //
+  // while (ns.scriptRunning(INFILTRATE_SCRIPT, 'home')) {
+  //   await ns.sleep(1000);
+  // }
 
   await ns.sleep(30000);
   ns.run('backdoor.js');
