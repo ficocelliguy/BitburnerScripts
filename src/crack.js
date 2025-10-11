@@ -1,5 +1,7 @@
 /** @param {NS} ns */
 export async function main(ns) {
+  ns.sleep(100);
+
   ns.disableLog('ALL');
   const targetNode = ns.args[0] || '';
   const delay = ns.args[1] || 0;

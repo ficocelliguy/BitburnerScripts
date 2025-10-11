@@ -4,7 +4,4 @@ export async function main(ns) {
     await ns.dnet.memoryReallocation();
     ns.print(ns.getServer().ramUsed);
   }
-  ns.run('dn_cache.js');
-  await ns.sleep(1000);
-  ns.run('dn_phish.js');
 }

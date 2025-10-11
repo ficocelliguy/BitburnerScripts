@@ -1,15 +1,11 @@
 /** @param {NS} ns */
 export async function main(ns) {
-  // const currentPID = ns.getRunningScript().pid;
-  // const scripts = ns.ps();
-  // const existingScript = scripts.find((script) => script.filename === 'dn_test.js' && script.pid !== currentPID);
-  // if (existingScript) {
-  //   return 0;
-  // }
   const serverName = ns.getHostname();
   //ns.toast(`Authenticated to ${serverName}`);
 
   while (true) {
+    runChildScripts(ns);
+
     const nearbyServers = ns.dnet.probe();
     for (const server of nearbyServers) {
       const existingPassword = getExistingPassword(ns, server);
@@ -19,13 +15,7 @@ export async function main(ns) {
         continue;
       }
 
-      // const runningScript = ns.ps(server).find((script) => script.filename === ns.getScriptName());
-      // if (runningScript) {
-      //   ns.print(`Already running on ${server}`);
-      //   continue;
-      // }
-
-      let success = (await authWrapper(ns, server, existingPassword || '')).success;
+      let success = existingPassword && (await authWrapper(ns, server, existingPassword || '')).success;
 
       if (!success) {
         success = await serverSolver(ns, server);
@@ -45,8 +35,8 @@ export async function main(ns) {
         ns.scp('dn_clear.js', server, serverName);
         ns.scp('dn_cache.js', server, serverName);
         ns.scp('dn_phish.js', server, serverName);
+        ns.scp('dn_stasis.js', server, serverName);
         ns.exec(ns.getScriptName(), server, { preventDuplicates: true, temporary: true });
-        ns.exec('dn_clear.js', server, { preventDuplicates: true, temporary: true });
       }
     }
     await ns.sleep(10000);
@@ -144,6 +134,8 @@ export const serverSolver = async (ns, server) => {
     // case Minigames.parsedExpression:
     //   await parsedExpressionSolver(ns, server, response);
     //   break;
+    case Minigames.labyrinth:
+      return solveLab(ns);
     default:
       return sniff(ns, server);
   }
@@ -374,7 +366,7 @@ const Minigames = {
   parsedExpression: 'MathML',
   divisibilityTest: 'ModuloTerm',
   packetSniffer: 'OpenWebAccessPoint',
-  labyrinth: '_lab_',
+  labyrinth: '(The Labyrinth)',
 };
 
 export const encodeNumberInBaseN = (decimalNumber, base) => {
@@ -553,3 +545,73 @@ export const generateAllStringsOfLengthN = (n) => {
   generate('');
   return result;
 };
+
+/** @param {NS} ns */
+function runChildScripts(ns) {
+  const labNeighbor = ns.dnet.probe().find((s) => s === 'th3_l4byr1nth');
+  const isStasisLinked = ns.dnet.getStasisLinkedServers().includes(ns.getHostname());
+  const stasisIsRunning = ns.isRunning('dn_stasis.js');
+  if (labNeighbor && !isStasisLinked && !stasisIsRunning) {
+    return ns.run('dn_stasis.js');
+  }
+
+  const hasRamBlocked = ns.dnet.getOwnerAllocatedRam();
+  const clearIsRunning = ns.isRunning('dn_clear.js');
+  if (hasRamBlocked && !clearIsRunning) {
+    return ns.run('dn_clear.js');
+  }
+
+  const hasCaches = ns.ls(ns.getHostname(), '.cache');
+  const cacheIsRunning = ns.isRunning('dn_cache.js');
+  if (hasCaches.length && !cacheIsRunning) {
+    return ns.run('dn_cache.js');
+  }
+
+  if (!ns.isRunning('dn_phish.js')) {
+    return ns.run('dn_phish.js');
+  }
+}
+
+/** @param {NS} ns */
+async function solveLab(ns) {
+  const result = await ns.dnet.authenticate('th3_l4byr1nth', 'north');
+  const status = JSON.parse(result.data ?? '{}');
+  await navigateMaze(ns, status);
+}
+
+/** @param {NS} ns */
+async function navigateMaze(ns, surroundings = {}, previousDirection = null) {
+  const validDirections = ['north', 'east', 'south', 'west'].filter(
+    (d) => d !== getOppositeDirection(previousDirection) && surroundings[d] !== false,
+  );
+
+  for (const direction of validDirections) {
+    const result = await ns.dnet.authenticate('th3_l4byr1nth', direction);
+    if (result.success) {
+      savePassword(ns, 'th3_l4byr1nth', result.data);
+      return true;
+    } else {
+      const newSurroundings = JSON.parse(result.data ?? '{}');
+      if (await navigateMaze(ns, newSurroundings, direction)) {
+        return true;
+      }
+    }
+  }
+  previousDirection && (await ns.dnet.authenticate('th3_l4byr1nth', getOppositeDirection(previousDirection)));
+  return false;
+}
+
+function getOppositeDirection(direction) {
+  switch (direction) {
+    case 'north':
+      return 'south';
+    case 'east':
+      return 'west';
+    case 'south':
+      return 'north';
+    case 'west':
+      return 'east';
+    default:
+      return null;
+  }
+}
