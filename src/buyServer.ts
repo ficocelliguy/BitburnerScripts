@@ -2,18 +2,18 @@ import { NS } from '@ns';
 const MIN_MONEY = 1_000_000_000;
 
 export async function main(ns: NS) {
-  while (ns.getPurchasedServers().length < ns.getPurchasedServerLimit() && ns.getPlayer().money >= MIN_MONEY) {
+  while (ns.cloud.getServerNames().length < ns.cloud.getServerLimit() && ns.getPlayer().money >= MIN_MONEY) {
     const maxServerExponent = getMaximumServerAffordable(ns);
     const maxServerSize = 2 ** maxServerExponent;
 
-    ns.print('Size: 2**', maxServerExponent, ', cost: ', ns.format.number(ns.getPurchasedServerCost(maxServerSize)));
-    ns.purchaseServer('BigBoi-' + maxServerExponent, maxServerSize);
+    ns.print('Size: 2**', maxServerExponent, ', cost: ', ns.format.number(ns.cloud.getServerCost(maxServerSize)));
+    ns.cloud.purchaseServer('BigBoi-' + maxServerExponent, maxServerSize);
     await ns.sleep(10);
   }
 
   while (ns.getPlayer().money >= MIN_MONEY) {
-    const serverToUpgrade = ns
-      .getPurchasedServers()
+    const serverToUpgrade = ns.cloud
+      .getServerNames()
       .map((server) => ({
         ram: ns.getServerMaxRam(server),
         ip: server,
@@ -24,7 +24,7 @@ export async function main(ns: NS) {
     if (ns.getServerMaxRam(serverToUpgrade.ip) >= 2 ** maxServerExponent) {
       return;
     }
-    ns.upgradePurchasedServer(serverToUpgrade.ip, 2 ** maxServerExponent);
+    ns.cloud.upgradeServer(serverToUpgrade.ip, 2 ** maxServerExponent);
     await ns.sleep(10);
   }
 }
@@ -33,7 +33,7 @@ export async function main(ns: NS) {
 const getMaximumServerAffordable = (ns: NS) => {
   let exponent = 5;
   const money = ns.getPlayer().money - MIN_MONEY;
-  while (ns.getPurchasedServerCost(2 ** exponent) < money && exponent <= 20) {
+  while (ns.cloud.getServerCost(2 ** exponent) < money && exponent <= 20) {
     exponent++;
   }
 

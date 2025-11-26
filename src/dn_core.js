@@ -135,7 +135,7 @@ export const serverSolver = async (ns, server) => {
     //   await parsedExpressionSolver(ns, server, response);
     //   break;
     case Minigames.labyrinth:
-      return solveLab(ns);
+      return solveLab(ns, server);
     default:
       return sniff(ns, server);
   }
@@ -548,14 +548,14 @@ export const generateAllStringsOfLengthN = (n) => {
 
 /** @param {NS} ns */
 function runChildScripts(ns) {
-  const labNeighbor = ns.dnet.probe().find((s) => s === 'th3_l4byr1nth');
+  const labNeighbor = ns.dnet.probe().find((s) => s.includes('l4byr1nth'));
   const isStasisLinked = ns.dnet.getStasisLinkedServers().includes(ns.getHostname());
   const stasisIsRunning = ns.isRunning('dn_stasis.js');
   if (labNeighbor && !isStasisLinked && !stasisIsRunning) {
     return ns.run('dn_stasis.js');
   }
 
-  const hasRamBlocked = ns.dnet.getOwnerAllocatedRam();
+  const hasRamBlocked = ns.dnet.getBlockedRam();
   const clearIsRunning = ns.isRunning('dn_clear.js');
   if (hasRamBlocked && !clearIsRunning) {
     return ns.run('dn_clear.js');
@@ -572,32 +572,38 @@ function runChildScripts(ns) {
   }
 }
 
-/** @param {NS} ns */
-async function solveLab(ns) {
-  const result = await ns.dnet.authenticate('th3_l4byr1nth', 'north');
+/** @param {NS} ns
+ * @param labName
+ */
+async function solveLab(ns, labName) {
+  const result = await ns.dnet.authenticate(labName, 'north');
   const status = JSON.parse(result.data ?? '{}');
-  await navigateMaze(ns, status);
+  await navigateMaze(ns, labName, status);
 }
 
-/** @param {NS} ns */
-async function navigateMaze(ns, surroundings = {}, previousDirection = null) {
+/** @param {NS} ns
+ * @param labName
+ * @param surroundings
+ * @param previousDirection
+ */
+async function navigateMaze(ns, labName, surroundings = {}, previousDirection = null) {
   const validDirections = ['north', 'east', 'south', 'west'].filter(
     (d) => d !== getOppositeDirection(previousDirection) && surroundings[d] !== false,
   );
 
   for (const direction of validDirections) {
-    const result = await ns.dnet.authenticate('th3_l4byr1nth', direction);
+    const result = await ns.dnet.authenticate(labName, direction);
     if (result.success) {
-      savePassword(ns, 'th3_l4byr1nth', result.data);
+      savePassword(ns, labName, result.data);
       return true;
     } else {
       const newSurroundings = JSON.parse(result.data ?? '{}');
-      if (await navigateMaze(ns, newSurroundings, direction)) {
+      if (await navigateMaze(ns, labName, newSurroundings, direction)) {
         return true;
       }
     }
   }
-  previousDirection && (await ns.dnet.authenticate('th3_l4byr1nth', getOppositeDirection(previousDirection)));
+  previousDirection && (await ns.dnet.authenticate(labName, getOppositeDirection(previousDirection)));
   return false;
 }
 

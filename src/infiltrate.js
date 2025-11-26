@@ -54,9 +54,9 @@ export function autocomplete() {
 
 /** @param {NS} ns */
 export async function main(ns) {
-  ns.tail();
-  ns.resizeTail(420, 200);
-  ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
+  ns.ui.openTail();
+  ns.ui.resizeTail(420, 200);
+  ns.ui.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
 
   const factionList = Object.values(factions);
   const targetFactions = ns.args
@@ -87,8 +87,8 @@ export async function main(ns) {
       await startInfiltration(ns);
       await playMinigame(ns, targetFaction);
 
-      ns.resizeTail(420, 200);
-      ns.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
+      ns.ui.resizeTail(420, 200);
+      ns.ui.moveTail(Math.floor(doc.body.scrollWidth * 0.8 - 200), Math.floor(doc.body.scrollHeight * 0.7));
     }
   }
   const overviewTitle = doc.querySelector('[data-testid="EqualizerIcon"] ~ p');
@@ -98,7 +98,7 @@ export async function main(ns) {
     await ns.sleep(300);
     await beep();
   }
-  ns.closeTail();
+  ns.ui.closeTail();
 }
 
 /** @param {NS} ns */
@@ -110,8 +110,11 @@ async function playMinigame(ns, targetFaction) {
 
   wrapEventListeners();
 
-  let title = getGameTitle(ns);
-  while (title) {
+  let title, instructions;
+
+  do {
+    title = getGameTitle();
+    instructions = getGameInstructions();
     //title.indexOf('Get Ready') === -1 && ns.print(`Minigame Detected! ${title}`);
     //console.log(`Title detected: ${title}`);
 
@@ -119,7 +122,7 @@ async function playMinigame(ns, targetFaction) {
       await playMatchSymbols(ns);
     } else if (contains(title, 'Enter the Code')) {
       await playEnterCode(ns);
-    } else if (contains(title, 'when his guard is')) {
+    } else if (contains(instructions, 'drops his guard')) {
       await playAttackGuard(ns);
     } else if (contains(title, 'Type it')) {
       await playTypeBackwards(ns);
@@ -141,8 +144,7 @@ async function playMinigame(ns, targetFaction) {
     }
 
     await ns.sleep(100);
-    title = getGameTitle(ns);
-  }
+  } while (title);
 
   //ns.print('no title detected, ending infiltration');
 
@@ -160,7 +162,7 @@ async function beep() {
 /** @param {NS} ns */
 const handleSuccess = async (ns, targetFaction) => {
   await ns.sleep(400);
-  await setSelectionValue(doc.querySelector('.MuiInputBase-root [role="button"] ~ input'), targetFaction);
+  await setSelectionValue(doc.querySelector('.MuiSelect-select.MuiSelect-standard.MuiInputBase-input'), targetFaction);
 
   await ns.sleep(200);
   await click(doc.querySelector('.MuiInputBase-root ~ button'));
@@ -175,7 +177,7 @@ const handleSuccess = async (ns, targetFaction) => {
 const startInfiltration = async (ns) => {
   await click([...doc.querySelectorAll('[role="button"]')].find((b) => b.innerText.indexOf('City') !== -1));
   await ns.sleep(500);
-  await click(doc.querySelector('[aria-label="ECorp"], [aria-label="MegaCorp"]'));
+  await click(doc.querySelector('[aria-label="Joe\'s Guns"], [aria-label="ECorp"]'));
   await ns.sleep(500);
   await click([...doc.getElementsByTagName('button')].find((b) => b.innerText.indexOf('Infiltrate') !== -1));
   await ns.sleep(500);
@@ -187,7 +189,12 @@ const playCutWires = async (ns) => {
   const instructions = Array.from(doc.querySelectorAll('div > p'))
     .map((n) => n.innerText)
     .filter((text) => text.indexOf('Cut') !== -1)
-    .map((text) => text.match(/[0-9]| yellow| red| blue| white/)[0].trim());
+    .map((text) =>
+      text
+        .match(/[0-9]| yellow| red| blue| white/i)[0]
+        .trim()
+        .toLowerCase(),
+    );
 
   const wireCount = Array.from(doc.querySelectorAll('div > p')).filter((n) => n.innerText.match(/^[0-9]$/)).length;
 
@@ -227,7 +234,7 @@ const playRememberMines = async (ns) => {
     grid[i] = gridItems.slice(xSize * i, xSize * (i + 1));
   }
 
-  while (getGameTitle(ns).indexOf('Mark') === -1) {
+  while (getGameTitle().indexOf('Mark') === -1) {
     await ns.sleep(10);
   }
 
@@ -321,11 +328,11 @@ const playMatchBrackets = async (ns) => {
 
 /** @param {NS} ns */
 const playAttackGuard = async (ns) => {
-  let title = getGameTitle(ns);
+  let gameInstructions = getGameTitle();
 
-  while (!contains(title, 'reparing')) {
+  while (!contains(gameInstructions, 'Distracted!')) {
     await ns.sleep(10);
-    title = getGameTitle(ns);
+    gameInstructions = getGameTitle();
   }
 
   await ns.sleep(10);
@@ -336,10 +343,12 @@ const playAttackGuard = async (ns) => {
 const playEnterCode = async (ns) => {
   await ns.sleep(100);
 
-  const getArrow = () =>
-    Array.from(doc.querySelectorAll('h4'))
+  const getArrow = () => {
+    const arrows = Array.from(doc.querySelectorAll('h4 > div > span:not([style])'))
       .map((el) => el.innerText.trim())
-      .find((text) => text.match(/[→↑←↓]/gi));
+      .filter((text) => text.match(/[→↑←↓]/i));
+    return arrows?.[arrows.length - 1] ?? '';
+  };
 
   let arrow = getArrow();
 
@@ -449,6 +458,8 @@ const getGameTitle = () =>
     .map((el) => el.innerText)
     .join(' ')
     .trim();
+
+const getGameInstructions = () => doc.querySelector('div > h5:nth-child(1)')?.innerText.trim() || '';
 
 /**
  *  Look for the cancel button to know when infiltration is ongoing

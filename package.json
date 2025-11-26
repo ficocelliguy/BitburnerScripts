@@ -19,5 +19,9 @@
     "vite": "^4.1.4",
     "viteburner": "^0.5.3"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "destr": "^2.0.5",
+    "lodash": "^4.17.21"
+  }
 }

@@ -1,4 +1,4 @@
-import { NS } from '@ns';
+import { NS, Server } from '@ns';
 
 export function autocomplete() {
   return ['--tail', 'destroy', 'fa'];
@@ -9,7 +9,7 @@ export async function main(ns: NS) {
   for (const i in servers) {
     const server = servers[i];
     const serverInfo = ns.getServer(server);
-    await connect(ns, server);
+    await conn(ns, server);
     if (!serverInfo.hasAdminRights) {
       try {
         ns.brutessh(server);
@@ -39,7 +39,7 @@ export async function main(ns: NS) {
   }
 
   if (ns.args.find((a) => a === 'destroy')) {
-    await connect(ns, `w0r1d_d43m0n`);
+    await conn(ns, `w0r1d_d43m0n`);
     try {
       await ns.singularity.installBackdoor();
     } catch (e) {}
@@ -47,7 +47,7 @@ export async function main(ns: NS) {
   }
 
   if (ns.args.find((a) => a === 'fa')) {
-    await connect(ns, `fulcrumassets`);
+    await conn(ns, `fulcrumassets`);
     try {
       await ns.singularity.installBackdoor();
     } catch (e) {}
@@ -59,7 +59,7 @@ export async function main(ns: NS) {
     const server = storyServers[i];
     let serverInfo;
     try {
-      serverInfo = ns.getServer(server);
+      serverInfo = ns.getServer(server) as Server;
     } catch (e) {}
     ns.tprint(
       ` (${serverInfo?.requiredHackingSkill}) ${server} Admin: ${serverInfo?.hasAdminRights ? '✓' : 'NO'} Backdoor: ${
@@ -98,7 +98,7 @@ const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth
   }
   const { hasAdminRights, maxRam, numOpenPortsRequired, openPortCount, requiredHackingSkill } = ns.getServer(
     nodeTree.id,
-  );
+  ) as Server;
 
   //{"hostname":"big'un-0","ip":"80.6.5.9","sshPortOpen":true,"ftpPortOpen":true,"smtpPortOpen":true,"httpPortOpen":false,"sqlPortOpen":false,"hasAdminRights":true,"cpuCores":1,"isConnectedTo":false,"ramUsed":62.4,"maxRam":64,"organizationName":"","purchasedByPlayer":true,"backdoorInstalled":false,"baseDifficulty":1,"hackDifficulty":1,"minDifficulty":1,"moneyAvailable":0,"moneyMax":0,"numOpenPortsRequired":5,"openPortCount":3,"requiredHackingSkill":1,"serverGrowth":1}
   const portDetails =
@@ -115,7 +115,7 @@ const printNodeTree = (ns: NS, nodeTree: connectionTree, fileName: string, depth
   });
 };
 
-const connect = async (ns: NS, target: string) => {
+const conn = async (ns: NS, target: string) => {
   const scannedNodes = ['home'];
   const tree: connectionTree = {
     id: 'home',
