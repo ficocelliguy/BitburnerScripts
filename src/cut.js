@@ -1,0 +1,41 @@
+/** @param {NS} ns */
+export async function main(ns) {
+  if (!ns.getStdin()) {
+    return ns.tprint('ERROR: No piped input given');
+  }
+
+  const flags = ns.flags([['c', '0']]);
+  const charCountRange = flags.c.split('-'); // the 'c' flag expects a range of characters like 2-4
+  const startCharCount = Number(charCountRange[0]?.trim());
+  const endCharCount = Number(charCountRange[1]?.trim() ?? startCharCount);
+
+  await onRead(ns, (data) => {
+    // slice the characters from the input data to specified range, and print them (aka send to stdout)
+    // tprintf is used to avoid printing the script's filename and line number before the message
+    ns.tprintf('%s', data.slice(startCharCount - 1, endCharCount));
+  });
+}
+
+/** @param {NS} ns */
+async function read(ns) {
+  const stdin = ns.getStdin();
+  if (stdin.empty()) {
+    await stdin.nextWrite();
+  }
+  return stdin.read();
+}
+
+/**
+ * Each time that data comes in through stdin, call callback with it as input, until stdin is closed
+ * @param {function (string): void} callback
+ * @param {NS} ns
+ */
+async function onRead(ns, callback) {
+  while (true) {
+    const input = await read(ns);
+    if (input === null) {
+      return; // If we get a null, stdin is closed: stop reading
+    }
+    callback(input);
+  }
+}
