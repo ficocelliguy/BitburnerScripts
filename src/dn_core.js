@@ -9,7 +9,7 @@ export async function main(ns) {
     const nearbyServers = ns.dnet.probe();
     for (const server of nearbyServers) {
       const existingPassword = getExistingPassword(ns, server);
-      let details = ns.dnet.getServerAuthDetails(server);
+      let details = ns.dnet.getServerDetails(server);
       if (!details || !details.isConnectedToCurrentServer || !details.isOnline) {
         ns.print(`Skipping ${server} - not connected or offline`);
         continue;
@@ -22,7 +22,7 @@ export async function main(ns) {
       }
 
       if (success) {
-        details = ns.dnet.getServerAuthDetails(server);
+        details = ns.dnet.getServerDetails(server);
         if (!details.isConnectedToCurrentServer || !details.isOnline) {
           continue;
         }
@@ -36,7 +36,7 @@ export async function main(ns) {
         ns.scp('dn_cache.js', server, serverName);
         ns.scp('dn_phish.js', server, serverName);
         ns.scp('dn_stasis.js', server, serverName);
-        ns.exec(ns.getScriptName(), server, { preventDuplicates: true, temporary: true });
+        ns.exec(ns.getScriptName(), server, { preventDuplicates: false, temporary: true });
       }
     }
     await ns.sleep(10000);
@@ -77,7 +77,7 @@ const savePassword = (ns, hostname, password) => {
  * @param {string} server
  */
 export const serverSolver = async (ns, server) => {
-  const details = ns.dnet.getServerAuthDetails(server);
+  const details = ns.dnet.getServerDetails(server);
   if (!details.isConnectedToCurrentServer || !details.isOnline) {
     return false;
   }
@@ -137,39 +137,13 @@ export const serverSolver = async (ns, server) => {
     case Minigames.labyrinth:
       return solveLab(ns, server);
     default:
-      return sniff(ns, server);
-  }
-};
-
-const sniff = async (ns, server) => {
-  ns.print(`Attempting to sniff packets from ${server}`);
-  const match = getPasswordFormatMatchRegex(ns, server);
-
-  while (true) {
-    const results = await ns.dnet.packetCapture(server);
-    if (!results.success) {
-      ns.print(`Failed to capture packets from ${server}: ${results.message}`);
       return false;
-    }
-    const matches = results.data.match(match);
-
-    for (const match of matches || []) {
-      const response = await authWrapper(ns, server, match);
-      if (response.success) {
-        ns.print(`Successfully authenticated to ${server} with password: ${match}`);
-        return true;
-      } else {
-        ns.print(`Failed to authenticate to ${server} with password: ${match}`);
-      }
-    }
-
-    await ns.sleep(10);
   }
 };
 
 const getPasswordFormatMatchRegex = (ns, server) => {
-  const passwordFormat = ns.dnet.getServerAuthDetails(server).passwordFormat;
-  const passwordLength = ns.dnet.getServerAuthDetails(server).passwordLength;
+  const passwordFormat = ns.dnet.getServerDetails(server).passwordFormat;
+  const passwordLength = ns.dnet.getServerDetails(server).passwordLength;
 
   if (passwordFormat === 'numeric') {
     return new RegExp(`\\d{${passwordLength}}`, 'g');

@@ -34,7 +34,7 @@ export async function main(ns) {
  */
 export const serverSolver = async (ns, hostname) => {
   // Get key info about the server, so we know what kind it is and how to authenticate with it
-  const details = ns.dnet.getServerAuthDetails(hostname);
+  const details = ns.dnet.getServerDetails(hostname);
   if (!details.isConnectedToCurrentServer || !details.isOnline) {
     // If the server isn't connected or is offline, we can't authenticate
     return false;
