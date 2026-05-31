@@ -1,5 +1,8 @@
 /** @param {NS} ns */
 export async function main(ns) {
+  if (!ns.self().filename.endsWith('sx')) {
+    throw new Error('This is a jsx script - it needs to end in .jsx, not .js!');
+  }
   ns.disableLog('ALL');
   const i = eval('wodniw'.split('').reverse().join(''));
   ns.ui.openTail();
