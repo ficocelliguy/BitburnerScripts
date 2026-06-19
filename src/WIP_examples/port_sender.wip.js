@@ -3,6 +3,17 @@
                 (c) 2069 Helios Labs / jump3r
 
            See port_receiver.wip.js for full details.
+
+
+     > is this finally good enough? it's perfect code - no flaws!
+     > I know that a high hacking skill is the key to finally
+     > getting an in with daedalus
+     >
+     > these augments make my brain itch. I hope it's all worth it
+     >
+     > soon I will
+     > take
+     > fl1ght
  */
 
 import { DATA_PORT, colorText } from './port_receiver.wip.js';
