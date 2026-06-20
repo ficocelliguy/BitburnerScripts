@@ -7,8 +7,8 @@
     @@   < SERVER >       |"--__--"|                    @@@@@
    @@                     |     $  |    < UPGRADES >         @@
    @                       "--__--"                           @@
-     @@              @@@@@             @@@@ (c) 2061 jump3r @@
-       @@@@@@@@@@@@@@@   @@@@@@@@@@@@@@@  @@@@@@@@@@@@@@@@@
+     @@              @@@@@             @@@@                  @@
+       @@@@@@@@@@@@@@@   @@@@@@@@@@@@@@@  @_(c)_2061_jump3r_@
           /     /        /   /      /       /  /
        /    /     /  /        / /        /           /
 
@@ -23,7 +23,7 @@ export async function main(ns: NS) {
   ns.ui.openTail();
 
   const cloudServers: string[] = ns.cloud.getServerNames();
-  const serverToUpgrade: string = cloudServers[0];
+  const serverToUpgrade: string = cloudServers[0] ?? ns.cloud.purchaseServer('Pserv', 8);
   const newRamAmount: number = 1337;
 
   // TODO: Read the docs for upgradeServer, and figure out how to use it properly
