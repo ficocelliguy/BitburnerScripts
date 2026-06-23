@@ -6,6 +6,10 @@
   apply your craft to solve it. Don't just use someone else's script as-is or ask a rogue AI to write it for you!
   Piece it together yourself from whatever you can find, and make it your own. Break it, fix it, and understand it.
 
+   This world is not what it seems. You can break its boundaries and push what is possible. Never be complacent!
+
+   If you find this, it means I'm already gone. Gone ahead into what comes next. I hope I've left enough hints behind.
+                 - jump3r
  */
 
 /** @param {NS} ns */
@@ -14,7 +18,7 @@ export async function main(ns) {
   ns.clearLog();
   ns.disableLog('sleep');
 
-  printAndStickToTop(ns, 'test1');
+  printAndStickToTopOfLogs(ns, 'test1');
 
   addToOverview('test2');
 
@@ -24,12 +28,20 @@ export async function main(ns) {
   }
 }
 
-function printAndStickToTop(ns, text) {
+/**
+ * Prints the provided text to a floating box, attached to the top of the tail window
+ * @param {NS} ns
+ * @param {string} text
+ */
+export function printAndStickToTopOfLogs(ns, text) {
   ns.printRaw(<span style={{ position: 'fixed', top: '35px', width: '100%', backgroundColor: 'blue' }}>{text}</span>);
 }
 
-function addToOverview(text) {
-  const doc = globalThis['document'];
-  const containerNode = doc.querySelector('#overview-extra-hook-0');
+/**
+ * Adds the specified text to the bottom of the collapsable Overview panel that shows player stats and money
+ * @param {string} text
+ */
+export function addToOverview(text) {
+  const containerNode = globalThis['document'].querySelector('#overview-extra-hook-0');
   ReactDOM.render(<div>{text}</div>, containerNode);
 }

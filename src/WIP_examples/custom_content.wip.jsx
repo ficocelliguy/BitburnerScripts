@@ -1,0 +1,67 @@
+/*
+
+  TODO: creepypasta or whatever
+
+ */
+
+/** @param {NS} ns */
+export async function main(ns) {
+  addToSidebar(ns, "jump3r's secrets", 'this world is not what it seems');
+  ns.print('Custom content added to sidebar');
+
+  // Prevent the script from exiting, so the custom react components can still use ns methods
+  await new Promise(() => {});
+}
+
+/**
+ * Creates a clickable SidebarItem and adds it to the game's left-hand menu.
+ * When clicked, it opens a new full-screen ContentPage with the provided text.
+ * @param {NS} ns - netscript api
+ * @param {string} sidebarLabel - the label for the sidebar button
+ * @param {string} pageText - the text to display in the new page
+ */
+function addToSidebar(ns, sidebarLabel, pageText) {
+  const containerNode = globalThis['document'].getElementById('sidebar-extra-hook-0');
+  ReactDOM.render(<SidebarItem ns={ns} sidebarLabel={sidebarLabel} pageText={pageText} />, containerNode);
+}
+
+/**
+ * Example component: a sidebar item that opens a new ContentPage when clicked.
+ * @param {NS} ns - netscript api
+ * @param {string} sidebarLabel - the label for the sidebar button
+ * @param {string} pageText - the text to display in the new page
+ * @returns {React.ReactElement}
+ * @constructor
+ */
+function SidebarItem({ ns, sidebarLabel, pageText }) {
+  function openPage() {
+    ns.ui.renderPage(<ContentPage text={pageText} />);
+  }
+  return <span onClick={openPage}>{sidebarLabel}</span>;
+}
+
+/**
+ * Example component: a simple page that displays some text and a timer.
+ * @param {string} text - text to show on the page
+ * @returns {React.ReactElement}
+ * @constructor
+ */
+function ContentPage({ text }) {
+  const [seconds, setSeconds] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((seconds) => seconds + 1);
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+      console.log('Unmount Timer');
+    };
+  }, []);
+
+  return (
+    <div>
+      {text} Seconds: {seconds}
+    </div>
+  );
+}
