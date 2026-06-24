@@ -29,12 +29,12 @@ export async function main(ns) {
     await ns.sleep(10); // let go of the thread so the other script can actually start
   }
 
-  const serverToAnalyze = ns.args[0] ?? 'n00dles';
+  const serverToAnalyze = 'n00dles';
   const serverData = ns.getServer(serverToAnalyze);
 
   ns.print(`Analyzed server ${serverToAnalyze}`);
   ns.print(colorText(`Sending server data over port ${DATA_PORT}`, '#8855FF'));
-  ns.writePort(DATA_PORT, serverData);
+  ns.writePort(serverData);
 }
 
 /** @param {NS} ns */

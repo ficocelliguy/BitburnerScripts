@@ -22,11 +22,11 @@ export async function main(ns) {
   // Launch script to get data and report back
   if (!senderScriptIsRunning(ns)) {
     ns.print(colorText('Starting data sender script.', '#00FFFF'));
-    ns.run('port_sender.wip.js', 1, 'n00dles');
+    ns.run('port_sender.wip.js', 1);
   }
 
   ns.print(colorText('Waiting for data...', '#00FFFF'));
-  await ns.nextPortWrite(DATA_PORT);
+  await ns.nextPortWrite();
   const data = ns.readPort(DATA_PORT);
   ns.print(colorText(`Received data over port:`, '#00FFFF'));
   ns.print(JSON.stringify(data, null, 2));

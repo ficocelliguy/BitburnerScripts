@@ -42,6 +42,6 @@ export function printAndStickToTopOfLogs(ns, text) {
  * @param {string} text
  */
 export function addToOverview(text) {
-  const containerNode = globalThis['document'].querySelector('#overview-extra-hook-0');
+  const containerNode = document.querySelector('#overview-extra-hook-0');
   ReactDOM.render(<div>{text}</div>, containerNode);
 }

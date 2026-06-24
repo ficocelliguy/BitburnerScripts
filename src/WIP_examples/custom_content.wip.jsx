@@ -33,7 +33,7 @@ export async function main(ns) {
  * @param {string} pageText - the text to display in the new page
  */
 function addToSidebar(ns, sidebarLabel, pageText) {
-  const containerNode = globalThis['document'].getElementById('sidebar-extra-hook-0');
+  const containerNode = document.getElementById('sidebar-extra-hook-0');
   ReactDOM.render(<SidebarItem ns={ns} sidebarLabel={sidebarLabel} pageText={pageText} />, containerNode);
 }
 

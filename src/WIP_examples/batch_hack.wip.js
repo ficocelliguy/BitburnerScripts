@@ -30,20 +30,18 @@
 /** @param {NS} ns */
 export async function main(ns) {
   ns.ui.openTail();
-  const host = ns.self().server;
-  const target = 'n00dles';
 
   while (true) {
-    const hackDelay = ns.getWeakenTime(target) - ns.getHackTime(target);
-    const growDelay = ns.getWeakenTime(target) - ns.getGrowTime(target);
+    const hackDelay = ns.getWeakenTime - ns.getHackTime('n00dles');
+    const growDelay = ns.getWeakenTime - ns.getGrowTime('n00dles');
 
     // TODO: calculate good thread counts for the target, instead of hard-coding them (e.g. take 3% of max money per batch, and grow it back and fix security)
-    ns.exec('hack.wip.js', host, { threads: 1, temporary: true }, target, hackDelay);
-    ns.exec('grow.wip.js', host, { threads: 1, temporary: true }, target, growDelay);
-    const weakStarted = ns.exec('weak.wip.js', host, { threads: 1, temporary: true }, target);
+    ns.run('hack.wip.js', { threads: 1, temporary: true }, 'n00dles', hackDelay);
+    ns.exec('grow.wip.js', { threads: 1, temporary: true }, 'n00dles', growDelay);
+    const weakStarted = ns.exec('weak.wip.js', { threads: 1, temporary: true });
 
     if (!weakStarted) {
-      await ns.sleep(ns.getWeakenTime(target));
+      await ns.sleep(ns.getWeakenTime('n00dles'));
     }
   }
 }
