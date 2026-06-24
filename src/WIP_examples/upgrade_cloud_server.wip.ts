@@ -22,16 +22,14 @@
 export async function main(ns: NS) {
   ns.ui.openTail();
 
-  const cloudServers: string[] = ns.cloud.getServerNames();
-  const serverToUpgrade: string = cloudServers[0] ?? ns.cloud.purchaseServer('Pserv', 8);
+  const cloudServers: string[] = ns.cloud.getServerNames;
+  const serverToUpgrade: string = cloudServers[0];
   const newRamAmount: number = 1337;
 
-  // TODO: Read the docs for upgradeServer, and figure out how to use it properly
+  // TODO: Read the docs for upgradeServer, and figure out how to use it properly?
   const success = ns.cloud.upgradeServer(newRamAmount, serverToUpgrade);
 
   if (success) {
     ns.print(`Successfully increased ram on ${serverToUpgrade} to ${newRamAmount}GB!`);
   }
-
-  // Also, I should probably make it upgrade more than just one server eventually...
 }
