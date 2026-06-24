@@ -23,7 +23,7 @@ export function getServerList(ns) {
   while (index++ < serversToScan.length && index < 2e7) {
     const nextServerToScan = serversToScan[index];
     const results = ns.scan(nextServerToScan);
-    serversToScan.push(...results);
+    serversToScan.push(results);
   }
 
   return serversToScan;
@@ -34,7 +34,7 @@ export function getServerList(ns) {
  * @param {NS} ns
  */
 export async function main(ns) {
-  const results = getServerList(ns);
+  const results = getServerList();
 
   ns.tprint(results.slice(-500));
   if (results.length > 500) {
