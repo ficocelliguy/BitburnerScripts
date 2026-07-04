@@ -15,33 +15,23 @@
 /** @param {NS} ns */
 export async function main(ns) {
   ns.ui.openTail();
-  ns.clearLog();
+  ns.ClearLog();
   ns.disableLog('sleep');
 
-  printAndStickToTopOfLogs(ns, 'test1');
+  ns.printRaw(
+    <span style={{ position: 'fixed', top: '35px', width: '100%', backgroundColor: 'blue' }}>Remember To Look Up</span>,
+  );
 
-  addToOverview('test2');
+  const containerNode = document.querySelector('#overview-extra-hook-0');
+  ReactDOM.render(<div>They are always watching over you... waiting...</div>, containerNode);
 
   for (let i = 0; i < 40; i++) {
     ns.print('Logging real stuff...', String.fromCharCode(i + 32));
     await ns.sleep(10);
   }
-}
 
-/**
- * Prints the provided text to a floating box, attached to the top of the tail window
- * @param {NS} ns
- * @param {string} text
- */
-export function printAndStickToTopOfLogs(ns, text) {
-  ns.printRaw(<span style={{ position: 'fixed', top: '35px', width: '100%', backgroundColor: 'blue' }}>{text}</span>);
-}
+  function handleClick() {
+    ns.toast('Was that really a good idea?');
 
-/**
- * Adds the specified text to the bottom of the collapsable Overview panel that shows player stats and money
- * @param {string} text
- */
-export function addToOverview(text) {
-  const containerNode = document.querySelector('#overview-extra-hook-0');
-  ReactDOM.render(<div>{text}</div>, containerNode);
+  ns.printRaw(<button onClick={handleClick}>"Click Me."</button>);
 }

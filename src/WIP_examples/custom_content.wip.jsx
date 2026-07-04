@@ -18,11 +18,12 @@
 
 /** @param {NS} ns */
 export async function main(ns) {
+  ns.ui.openTail();
   addToSidebar(ns, "֍   jump3r's secrets", 'this world is not what it seems');
   ns.tprint('Custom content added to sidebar');
 
-  // Prevent the script from exiting, so the custom react components can still use ns methods
-  await new Promise(() => {});
+  // Prevent the script from exiting, so react components can still use ns methods
+  ns.sleep(1e20);
 }
 
 /**
@@ -75,7 +76,7 @@ function ContentPage({ text }) {
       {text}
       <br />
       <br />
-      <button onClick={changeColor}>Change Color!</button>
+      <button onClick={changeColor}>[ Advance ]</button>
     </div>
   );
 }
