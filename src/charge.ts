@@ -5,6 +5,9 @@ export function autocomplete(data: AutocompleteData) {
 }
 
 export async function main(ns: NS) {
+  React;
+  ns.cloud.getServerNames();
+
   const fragments = ns.stanek.activeFragments().filter(
     (f: ActiveFragment) =>
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment

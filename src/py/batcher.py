@@ -10,9 +10,9 @@ async def main(ns):
 async def launchBatch(ns, target, hackThreads, growThreads):
   weakenThreads1 = Math.ceil(hackThreads * (0.002 / 0.05))
   weakenThreads2 = Math.ceil(growThreads * (0.004 / 0.05))
-  hackScriptSize = ns.getScriptRam("batch/crack.py")
-  growScriptSize = ns.getScriptRam("batch/grow.py")
-  weakenScriptSize = ns.getScriptRam("batch/weaken.py")
+  hackScriptSize = ns.getScriptRam("py/crack.py")
+  growScriptSize = ns.getScriptRam("py/grow.py")
+  weakenScriptSize = ns.getScriptRam("py/weaken.py")
   batchSize = hackScriptSize * hackThreads + (weakenThreads1 + weakenThreads2) * weakenScriptSize + growThreads * growScriptSize
   hackDelay = ns.getWeakenTime(target) - ns.getHackTime(target)
   growDelay = ns.getWeakenTime(target) - ns.getGrowTime(target)
@@ -28,13 +28,13 @@ async def launchBatch(ns, target, hackThreads, growThreads):
     batchCount = Math.floor(freeRam / batchSize)
 
     for i in range(batchCount):
-      ns.scp(["batch/crack.py","batch/grow.py","batch/weaken.py"], server)
+      ns.scp(["py/crack.py","py/grow.py","py/weaken.py"], server)
       if shouldLaunchHack:
-        ns.exec("batch/crack.py", server, {"threads": hackThreads, "temporary": True}, target, hackDelay)
-      ns.exec("batch/weaken.py", server, {"threads": weakenThreads1, "temporary": True}, target)
+        ns.exec("py/crack.py", server, {"threads": hackThreads, "temporary": True}, target, hackDelay)
+      ns.exec("py/weaken.py", server, {"threads": weakenThreads1, "temporary": True}, target)
       if shouldLaunchGrow:
-        ns.exec("batch/grow.py", server, {"threads": growThreads, "temporary": True}, target, growDelay)
-      ns.exec("batch/weaken.py", server, {"threads": weakenThreads2, "temporary": True}, target)
+        ns.exec("py/grow.py", server, {"threads": growThreads, "temporary": True}, target, growDelay)
+      ns.exec("py/weaken.py", server, {"threads": weakenThreads2, "temporary": True}, target)
       if i % 100 == 0:
         await ns.sleep(10)
   

@@ -28,12 +28,6 @@
       ],
       "@ns": [
         "./NetscriptDefinitions.d.ts"
-      ],
-      "react": [
-        "c:/Users/Mike/.vscode/extensions/ficocelliguy.bitburner-file-sync-plugin-0.0.9/dist/types/react"
-      ],
-      "react-dom": [
-        "c:/Users/Mike/.vscode/extensions/ficocelliguy.bitburner-file-sync-plugin-0.0.9/dist/types/react-dom"
       ]
     },
     "jsx": "react"
