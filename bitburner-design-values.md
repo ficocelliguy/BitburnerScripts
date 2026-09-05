@@ -31,8 +31,6 @@ close to the authors' own phrasing as possible.
    - Avoid shortcuts that "skip the fun" where possible.
    - JS exploits cannot be locked down and will not be. Players define their own limits.
 7. **Docs should have hints, not hand-holding.**
-   - Example scripts are broken or suboptimal so players still have to figure out the good version.
-   - UI prompts should be brief and in-universe, not aggressive modals.
    - Docs are a reference, and do not provide optimal solutions or step-by-step guides.
 8. **Manual play and experimentation are important.**
    - Automation must always be available. Progress cannot be gated on manual clicking.
@@ -40,9 +38,7 @@ close to the authors' own phrasing as possible.
 9. **Push things to userland if players can already build them.**
    - If players can already solve a problem or build a feature using player scripts, adding it as a game feature needs to be considered carefully.
 10. **API breaks are discouraged, and are grouped into major releases (v3, v4, ...).**
-    - Not shipped in minor or patch releases. Players update their scripts once per major, not constantly.
     - Even inside a major release, the bar is high: real benefit, automated migration when possible.
-    - Internals can be renamed freely. The constraint only applies to the public NS surface.
 
 ### What Bitburner is
 
